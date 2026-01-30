@@ -3,22 +3,31 @@ import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
 
-# --- Streamlit Layout ---
 st.set_page_config(page_title="Stock Dashboard", layout="wide")
 st.title("📊 Aktien Dashboard")
 
-# --- Aktienliste ---
-tickers = ["MSFT", "AAPL", "GOOGL", "AMZN", "TSLA", "NVDA"]
+# --- Liste der Ticker ---
+tickers = ["EUNL"]  # hier kannst du weitere hinzufügen
+
+# --- Mapping: Ticker → Name + ISIN ---
+ticker_info = {
+    "EUNL": {
+        "name": "iShares Core MSCI World ETF",
+        "isin": "IE00B4L5Y983"
+    }
+    # Weitere Ticker können hier ergänzt werden:
+    # "MSFT": {"name": "Microsoft Corp", "isin": "..."}
+}
 
 # --------------------------
 # Funktionen
 # --------------------------
 def get_data(ticker):
     try:
-        df = yf.Ticker(ticker).history(period="6mo")  # stabiler als download()
+        df = yf.Ticker(ticker).history(period="6mo")
         if df.empty or len(df) < 2:
             return None
-        df.index = pd.to_datetime(df.index)  # Index muss datetime sein
+        df.index = pd.to_datetime(df.index)
         return df
     except:
         return None
@@ -42,7 +51,7 @@ def colorize(val):
     color = "green" if val >= 0 else "red"
     return f"<span style='color: {color}'>{val:.2f}%</span>"
 
-def create_line_chart(df, ticker):
+def create_line_chart(df):
     if df is None or len(df) < 2:
         return None
     fig = go.Figure()
@@ -50,12 +59,10 @@ def create_line_chart(df, ticker):
         x=df.index,
         y=df['Close'],
         mode='lines',
-        line=dict(color='blue'),
-        name=ticker
+        line=dict(color='blue')
     ))
     fig.update_layout(
         height=300,
-        title=ticker,
         xaxis_title="Datum",
         yaxis_title="Kurs USD",
         margin=dict(l=10,r=10,t=30,b=10)
@@ -63,19 +70,23 @@ def create_line_chart(df, ticker):
     return fig
 
 # --------------------------
-# Dashboard Layout: 3 Spalten
+# Dashboard Layout
 # --------------------------
 cols = st.columns(3)
 for idx, ticker in enumerate(tickers):
     col = cols[idx % 3]
     df = get_data(ticker)
     current, ath, daily, monthly, yearly = calc_kpis(df)
-    fig = create_line_chart(df, ticker)
+    fig = create_line_chart(df)
+
+    info = ticker_info.get(ticker, {"name": ticker, "isin": ""})
 
     with col:
         if df is None or fig is None:
             st.error(f"Keine Daten für {ticker} gefunden.")
         else:
+            # Überschrift in zwei Zeilen
+            st.markdown(f"**{info['name']}**  \n<small>Ticker: {ticker}  ISIN: {info['isin']}</small>", unsafe_allow_html=True)
             st.plotly_chart(fig, use_container_width=True)
             st.markdown(f"**Aktueller Kurs:** {current:.2f}")
             st.markdown(f"**All Time High:** {ath:.2f}")
