@@ -23,7 +23,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.title("📊 ETF & ETC Dashboard")
+st.title("ETF & ETC Dashboard")
 
 # --------------------------
 # Liste der 6 Ticker
