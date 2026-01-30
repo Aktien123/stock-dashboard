@@ -7,11 +7,11 @@ st.set_page_config(page_title="Stock Dashboard", layout="wide")
 st.title("📊 Aktien Dashboard")
 
 # --- Liste der Ticker ---
-tickers = ["IWDA"]  # hier kannst du weitere hinzufügen
+tickers = ["IWDA.AS"]  # hier kannst du weitere hinzufügen
 
 # --- Mapping: Ticker → Name + ISIN ---
 ticker_info = {
-    "IWDA": {
+    "IWDA.AS": {
         "name": "iShares Core MSCI World ETF",
         "isin": "IE00B4L5Y983"
     }
