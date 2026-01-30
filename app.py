@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 st.set_page_config(page_title="Stock Dashboard", layout="wide")
 st.title("📊 Aktien Dashboard")
 
+# --- Liste der 6 Aktien ---
 tickers = ["MSFT", "AAPL", "GOOGL", "AMZN", "TSLA", "NVDA"]
 
 # --- Funktionen ---
@@ -17,14 +18,11 @@ def get_data(ticker):
         return None
 
 def calc_kpis(df):
-    # Prüfen ob df None oder leer
     if df is None or df.empty:
         return None, None, None, None, None
 
-    close_series = df["Close"]
-
-    # Prüfen, ob Close-Spalte nur NaN enthält – safe
-    if not bool(close_series.notnull().any()):
+    close_series = df["Close"].dropna()  # Nur gültige Werte
+    if len(close_series) == 0:
         return None, None, None, None, None
 
     current = float(close_series.iloc[-1])
@@ -34,7 +32,6 @@ def calc_kpis(df):
     monthly = (close_series.iloc[-1] - close_series.iloc[-21]) / close_series.iloc[-21] * 100 if len(close_series) >= 22 else None
     yearly = (close_series.iloc[-1] - close_series.iloc[0]) / close_series.iloc[0] * 100
 
-    # Alle KPIs als float oder None zurückgeben
     daily = float(daily) if daily is not None else None
     monthly = float(monthly) if monthly is not None else None
     yearly = float(yearly) if yearly is not None else None
@@ -47,11 +44,10 @@ def create_chart(df, ticker):
     fig.update_layout(height=250, margin=dict(l=10,r=10,t=30,b=10), title=ticker)
     return fig
 
-# --- Layout: 3 Spalten ---
+# --- Layout: 3 Spalten, 2 Charts pro Spalte ---
 cols = st.columns(3)
-
-for i, ticker in enumerate(tickers):
-    col = cols[i % 3]
+for idx, ticker in enumerate(tickers):
+    col = cols[idx % 3]
     df = get_data(ticker)
     current, ath, daily, monthly, yearly = calc_kpis(df)
     fig = create_chart(df, ticker)
@@ -61,9 +57,16 @@ for i, ticker in enumerate(tickers):
             st.error(f"Keine Daten für {ticker} gefunden.")
         else:
             st.plotly_chart(fig, use_container_width=True)
-            st.markdown(f"**Aktueller Kurs:** {current:.2f}" if current is not None else "**Aktueller Kurs:** n/a")
-            st.markdown(f"**All Time High:** {ath:.2f}" if ath is not None else "**All Time High:** n/a")
-            st.markdown(f"**Tagesperformance:** {daily:.2f}%" if daily is not None else "**Tagesperformance:** n/a")
-            st.markdown(f"**Monatsperformance:** {monthly:.2f}%" if monthly is not None else "**Monatsperformance:** n/a")
-            st.markdown(f"**Jahresperformance:** {yearly:.2f}%" if yearly is not None else "**Jahresperformance:** n/a")
+
+            # Farbliche Performance
+            def colorize(val):
+                if val is None:
+                    return "n/a"
+                return f"<span style='color: {'green' if val >=0 else 'red'}'>{val:.2f}%</span>"
+
+            st.markdown(f"**Aktueller Kurs:** {current:.2f}")
+            st.markdown(f"**All Time High:** {ath:.2f}")
+            st.markdown(f"**Tagesperformance:** {colorize(daily)}", unsafe_allow_html=True)
+            st.markdown(f"**Monatsperformance:** {colorize(monthly)}", unsafe_allow_html=True)
+            st.markdown(f"**Jahresperformance:** {colorize(yearly)}", unsafe_allow_html=True)
             st.markdown("---")
