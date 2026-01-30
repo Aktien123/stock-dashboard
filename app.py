@@ -62,13 +62,15 @@ for idx, ticker in enumerate(tickers):
             st.plotly_chart(fig, use_container_width=True)
 
             # Farbliche Performance
-            def colorize(val):
-                if val is None:
-                    return "n/a"
-                return f"<span style='color: {'green' if val >=0 else 'red'}'>{val:.2f}%</span>"
+            # Farbliche Performance
+def colorize(val):
+    if val is None:
+        return "n/a"
+    return f"<span style='color: {'green' if val >= 0 else 'red'}'>{val:.2f}%</span>"
 
-            st.markdown(f"**Aktueller Kurs:** {current:.2f}")
-            st.markdown(f"**All Time High:** {ath:.2f}")
-            st.markdown(f"**Tagesperformance:** {colorize(daily)}", unsafe_allow_html=True)
-            st.markdown(f"**Monatsperformance:** {colorize(monthly)}", unsafe_allow_html=True)
-            st.markdown(f"**Jahre**
+st.markdown(f"**Aktueller Kurs:** {current:.2f}")
+st.markdown(f"**All Time High:** {ath:.2f}")
+st.markdown(f"**Tagesperformance:** {colorize(daily)}", unsafe_allow_html=True)
+st.markdown(f"**Monatsperformance:** {colorize(monthly)}", unsafe_allow_html=True)
+st.markdown(f"**Jahresperformance:** {colorize(yearly)}", unsafe_allow_html=True)
+
