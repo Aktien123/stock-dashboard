@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 st.set_page_config(page_title="Stock Dashboard", layout="wide")
 st.title("📊 Aktien Dashboard")
 
+# --- Liste der 6 Aktien ---
 tickers = ["MSFT", "AAPL", "GOOGL", "AMZN", "TSLA", "NVDA"]
 
 # --- Funktionen ---
@@ -40,9 +41,26 @@ def calc_kpis(df):
 def create_chart(df, ticker):
     if df is None or df.empty or df["Close"].dropna().empty:
         return None
+
+    df_chart = df[["Close"]].copy()
+    df_chart = df_chart.reset_index()  # Index (Datum) → Spalte
+    if "Date" not in df_chart.columns:
+        df_chart.rename(columns={df_chart.columns[0]: "Date"}, inplace=True)
+
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=df.index, y=df["Close"], name=ticker, line=dict(color='blue')))
-    fig.update_layout(height=250, margin=dict(l=10,r=10,t=30,b=10), title=ticker)
+    fig.add_trace(go.Scatter(
+        x=df_chart["Date"],
+        y=df_chart["Close"],
+        name=ticker,
+        line=dict(color='blue')
+    ))
+    fig.update_layout(
+        height=250,
+        margin=dict(l=10,r=10,t=30,b=10),
+        title=ticker,
+        xaxis_title="Datum",
+        yaxis_title="Kurs USD"
+    )
     return fig
 
 def colorize(val):
