@@ -120,8 +120,8 @@ for i, ticker in enumerate(tickers):
 
             kpi_cols = st.columns(2)
             with kpi_cols[0]:
-                st.markdown(f"**Aktueller Kurs:** {current:.2f} **EUR")
-                st.markdown(f"**All Time High:** {ath:.2f}")
+                st.markdown(f"**Aktueller Kurs:** {current:.2f} EUR")
+                st.markdown(f"**All Time High:** {ath:.2f} EUR")
                 st.markdown(f"**△ ATH:** {colorize(delta_ath)}", unsafe_allow_html=True)
             with kpi_cols[1]:
                 st.markdown(f"**Tagesperformance:** {colorize(daily)}", unsafe_allow_html=True)
