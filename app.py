@@ -46,7 +46,7 @@ def calc_kpis(df):
     daily = float((close.iloc[-1]-close.iloc[-2])/close.iloc[-2]*100)
     monthly = float((close.iloc[-1]-close.iloc[max(0,len(close)-22)])/close.iloc[max(0,len(close)-22)]*100) if len(close) >=22 else None
     yearly = float((close.iloc[-1]-close.iloc[0])/close.iloc[0]*100)
-    delta_ath = float((ath - current) / ath * 100)  # neue KPI △ ATH
+    delta_ath = float((current - ath) / ath * 100)  # korrigierte Formel
     return current, ath, daily, monthly, yearly, delta_ath
 
 def colorize(val):
