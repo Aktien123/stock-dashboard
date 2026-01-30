@@ -8,12 +8,17 @@ st.title("📊 Aktien Dashboard")
 
 tickers = ["MSFT", "AAPL", "GOOGL", "AMZN", "TSLA", "NVDA"]
 
+# --------------------------
+# Funktionen
+# --------------------------
 def get_data(ticker):
     try:
         df = yf.download(ticker, period="6mo", interval="1d")
-        df = df[['Close']].copy()  # Nur Close-Werte
-        df.dropna(inplace=True)
-        df.index = pd.to_datetime(df.index)  # Index in datetime umwandeln
+        if df.empty:
+            return None
+        # Index sichern und in Date-Spalte konvertieren
+        df = df[['Close']].copy()
+        df.index = pd.to_datetime(df.index)
         df.reset_index(inplace=True)
         df.rename(columns={'index':'Date'}, inplace=True)
         return df
@@ -21,15 +26,23 @@ def get_data(ticker):
         return None
 
 def calc_kpis(df):
-    if df is None or df.empty:
+    if df is None or df.empty or len(df) < 2:
         return None, None, None, None, None
     close = df['Close']
     current = float(close.iloc[-1])
     ath = float(close.max())
-    daily = (close.iloc[-1]-close.iloc[-2])/close.iloc[-2]*100 if len(close) >=2 else None
-    monthly = (close.iloc[-1]-close.iloc[-21])/close.iloc[-21]*100 if len(close) >=22 else None
-    yearly = (close.iloc[-1]-close.iloc[0])/close.iloc[0]*100
+    daily = float((close.iloc[-1] - close.iloc[-2]) / close.iloc[-2] * 100)
+    monthly = float((close.iloc[-1] - close.iloc[max(0, len(close)-22)]) / close.iloc[max(0, len(close)-22)] * 100) if len(close) >= 22 else None
+    yearly = float((close.iloc[-1] - close.iloc[0]) / close.iloc[0] * 100)
     return current, ath, daily, monthly, yearly
+
+def colorize(val):
+    try:
+        val = float(val)
+    except (TypeError, ValueError):
+        return "n/a"
+    color = "green" if val >= 0 else "red"
+    return f"<span style='color: {color}'>{val:.2f}%</span>"
 
 def create_line_chart(df, ticker):
     if df is None or df.empty:
@@ -51,16 +64,9 @@ def create_line_chart(df, ticker):
     )
     return fig
 
-def colorize(val):
-    # val kann None oder Series sein
-    try:
-        val = float(val)
-    except (TypeError, ValueError):
-        return "n/a"
-    color = "green" if val >= 0 else "red"
-    return f"<span style='color: {color}'>{val:.2f}%</span>"
-
-
+# --------------------------
+# Dashboard Layout
+# --------------------------
 cols = st.columns(3)
 for idx, ticker in enumerate(tickers):
     col = cols[idx % 3]
@@ -69,7 +75,7 @@ for idx, ticker in enumerate(tickers):
     fig = create_line_chart(df, ticker)
 
     with col:
-        if current is None or fig is None:
+        if df is None or fig is None:
             st.error(f"Keine Daten für {ticker} gefunden.")
         else:
             st.plotly_chart(fig, use_container_width=True)
