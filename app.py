@@ -56,15 +56,23 @@ def colorize(val):
     color = "green" if val >= 0 else "red"
     return f"<span style='color: {color}'>{val:.2f}%</span>"
 
-def create_line_chart(df):
+def create_line_chart(df, daily=None):
     if df is None or len(df) < 2:
         return None
+    # Farbe nach Tagesperformance
+    if daily is None:
+        line_color = "blue"
+    elif daily >= 0:
+        line_color = "green"
+    else:
+        line_color = "red"
+
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=df.index,
         y=df['Close'],
         mode='lines',
-        line=dict(color='blue', width=2),
+        line=dict(color=line_color, width=2),
         hovertemplate='Datum: %{x|%d.%m.%Y}<br>Kurs: %{y:.2f} EUR<extra></extra>'
     ))
     fig.update_layout(
@@ -78,4 +86,31 @@ def create_line_chart(df):
 
 # --------------------------
 # Dashboard Layout: 2 Reihen x 3 Spalten
-# ----
+# --------------------------
+rows = [st.columns(3) for _ in range(2)]
+
+for i, ticker in enumerate(tickers):
+    row = rows[i // 3]
+    col = row[i % 3]
+
+    df = get_data(ticker)
+    current, ath, daily, monthly, yearly = calc_kpis(df)
+    fig = create_line_chart(df, daily=daily)
+
+    info = ticker_info.get(ticker, {"name": ticker, "isin": ""})
+
+    with col:
+        if df is None or fig is None:
+            st.error(f"Keine Daten für {ticker} gefunden.")
+        else:
+            st.markdown(
+                f"**{info['name']}**  \n<small>Ticker: {ticker}&nbsp;&nbsp;&nbsp;&nbsp;ISIN: {info['isin']}</small>",
+                unsafe_allow_html=True
+            )
+            st.plotly_chart(fig, use_container_width=True)
+            st.markdown(f"**Aktueller Kurs:** {current:.2f}")
+            st.markdown(f"**All Time High:** {ath:.2f}")
+            st.markdown(f"**Tagesperformance:** {colorize(daily)}", unsafe_allow_html=True)
+            st.markdown(f"**Monatsperformance:** {colorize(monthly)}", unsafe_allow_html=True)
+            st.markdown(f"**Jahresperformance:** {colorize(yearly)}", unsafe_allow_html=True)
+            st.markdown("---")
