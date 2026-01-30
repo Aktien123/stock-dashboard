@@ -88,7 +88,7 @@ def create_line_chart(df, daily=None):
     fig.update_layout(
         height=300,
         #xaxis_title="Datum",
-        yaxis_title="Kurs EUR",
+        yaxis_title="EUR",
         margin=dict(l=10,r=10,t=30,b=10),
         plot_bgcolor="rgba(0,0,0,0)"
     )
@@ -120,7 +120,7 @@ for i, ticker in enumerate(tickers):
 
             kpi_cols = st.columns(2)
             with kpi_cols[0]:
-                st.markdown(f"**Aktueller Kurs:** {current:.2f}")
+                st.markdown(f"**Aktueller Kurs:** {current:.2f} **EUR")
                 st.markdown(f"**All Time High:** {ath:.2f}")
                 st.markdown(f"**△ ATH:** {colorize(delta_ath)}", unsafe_allow_html=True)
             with kpi_cols[1]:
