@@ -21,17 +21,18 @@ def calc_kpis(df):
     if df is None or df.empty:
         return None, None, None, None, None
     
+    # Sicherstellen, dass Close-Spalte Zahlen enthält
+    if df["Close"].isnull().all():
+        return None, None, None, None, None
+
     current = df["Close"].iloc[-1]
     ath = df["Close"].max()
     
-    # Tagesperformance
     daily = (df["Close"].iloc[-1] - df["Close"].iloc[-2]) / df["Close"].iloc[-2] * 100 if len(df) >= 2 else None
-    # Monatsperformance (ca. 21 Handelstage)
     monthly = (df["Close"].iloc[-1] - df["Close"].iloc[-21]) / df["Close"].iloc[-21] * 100 if len(df) >= 22 else None
-    # Jahresperformance
     yearly = (df["Close"].iloc[-1] - df["Close"].iloc[0]) / df["Close"].iloc[0] * 100
     
-    return current, ath, daily, monthly, yearly
+    return float(current), float(ath), float(daily) if daily is not None else None, float(monthly) if monthly is not None else None, float(yearly)
 
 def create_chart(df, ticker):
     fig = go.Figure()
@@ -52,16 +53,13 @@ for i, ticker in enumerate(tickers):
         if current is None:
             st.error(f"Keine Daten für {ticker} gefunden.")
         else:
-            # Chart oben
             st.plotly_chart(fig, use_container_width=True)
             
-            # KPIs unter Chart
-            st.markdown(f"**Aktueller Kurs:** {current:.2f}")
-            st.markdown(f"**All Time High:** {ath:.2f}")
-            if daily is not None:
-                st.markdown(f"**Tagesperformance:** {daily:.2f}%")
-            if monthly is not None:
-                st.markdown(f"**Monatsperformance:** {monthly:.2f}%")
-            st.markdown(f"**Jahresperformance:** {yearly:.2f}%")
+            # KPIs nur anzeigen, wenn Zahlen vorhanden
+            st.markdown(f"**Aktueller Kurs:** {current:.2f}" if current is not None else "**Aktueller Kurs:** n/a")
+            st.markdown(f"**All Time High:** {ath:.2f}" if ath is not None else "**All Time High:** n/a")
+            st.markdown(f"**Tagesperformance:** {daily:.2f}%" if daily is not None else "**Tagesperformance:** n/a")
+            st.markdown(f"**Monatsperformance:** {monthly:.2f}%" if monthly is not None else "**Monatsperformance:** n/a")
+            st.markdown(f"**Jahresperformance:** {yearly:.2f}%" if yearly is not None else "**Jahresperformance:** n/a")
             
             st.markdown("---")
