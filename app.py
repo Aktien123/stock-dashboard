@@ -3,20 +3,22 @@ import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
 
-st.set_page_config(page_title="Stock Dashboard", layout="wide")
-st.title("📊 Aktien Dashboard")
+st.set_page_config(page_title="ETF Dashboard", layout="wide")
+st.title("📊 ETF & ETC Dashboard")
 
-# --- Liste der Ticker ---
-tickers = ["IWDA.AS"]  # hier kannst du weitere hinzufügen
+# --------------------------
+# Liste der 6 Ticker
+# --------------------------
+tickers = ["IWDA.AS", "VWCE.DE", "IS3N.DE", "IUSN.DE", "4GLD.DE", "XAD6.DE"]
 
-# --- Mapping: Ticker → Name + ISIN ---
+# Mapping: Ticker → Name + ISIN
 ticker_info = {
-    "IWDA.AS": {
-        "name": "iShares Core MSCI World ETF",
-        "isin": "IE00B4L5Y983"
-    }
-    # Weitere Ticker können hier ergänzt werden:
-    # "MSFT": {"name": "Microsoft Corp", "isin": "..."}
+    "IWDA.AS": {"name":"iShares Core MSCI World UCITS ETF USD Acc.","isin":"IE00B4L5Y983"},
+    "VWCE.DE": {"name":"Vanguard FTSE All-World U.ETF Reg. Shs USD Acc.","isin":"IE00BK5BQT80"},
+    "IS3N.DE": {"name":"iShares Core MSCI Emerging Markets IMI UCITS ETF (Acc)","isin":"IE00BKM4GZ66"},
+    "IUSN.DE": {"name":"iShares MSCI World Small Cap (Acc)","isin":"IE00BF4RFH31"},
+    "4GLD.DE": {"name":"Xetra Gold ETC","isin":"DE000A0S9GB0"},
+    "XAD6.DE": {"name":"Xtrackers Physical Silver ETC","isin":"DE000A1E0HS6"}
 }
 
 # --------------------------
@@ -64,21 +66,23 @@ def create_line_chart(df):
     fig.update_layout(
         height=300,
         xaxis_title="Datum",
-        yaxis_title="Kurs EUR",
+        yaxis_title="Kurs",
         margin=dict(l=10,r=10,t=30,b=10)
     )
     return fig
 
 # --------------------------
-# Dashboard Layout
+# Dashboard Layout: 2 Reihen x 3 Spalten
 # --------------------------
-cols = st.columns(3)
-for idx, ticker in enumerate(tickers):
-    col = cols[idx % 3]
+rows = [st.columns(3) for _ in range(2)]
+
+for i, ticker in enumerate(tickers):
+    row = rows[i // 3]
+    col = row[i % 3]
+
     df = get_data(ticker)
     current, ath, daily, monthly, yearly = calc_kpis(df)
     fig = create_line_chart(df)
-
     info = ticker_info.get(ticker, {"name": ticker, "isin": ""})
 
     with col:
