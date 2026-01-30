@@ -18,6 +18,10 @@ def get_data(ticker):
     return df
 
 def calc_kpis(df):
+    if df.empty or df["Close"].isnull().all():
+        # Keine Daten → KPIs auf 0 oder None
+        return None, None, None, None, None
+
     current = df["Close"].iloc[-1]
     ath = df["Close"].max()
     daily = (df["Close"].iloc[-1] - df["Close"].iloc[-2]) / df["Close"].iloc[-2] * 100
@@ -41,11 +45,15 @@ for i, ticker in enumerate(tickers):
     fig = create_chart(df, ticker)
 
     # --- Anzeige ---
-    with col:
-        st.plotly_chart(fig, use_container_width=True)
-        st.markdown(f"**Aktueller Kurs:** {current:.2f}")
-        st.markdown(f"**All Time High:** {ath:.2f}")
-        st.markdown(f"**Tagesperformance:** {daily:.2f}%")
-        st.markdown(f"**Monatsperformance:** {monthly:.2f}%")
-        st.markdown(f"**Jahresperformance:** {yearly:.2f}%")
-        st.markdown("---")
+current, ath, daily, monthly, yearly = calc_kpis(df)
+
+if current is None:
+    st.error(f"Keine Daten für {ticker} gefunden.")
+else:
+    st.plotly_chart(fig, use_container_width=True)
+    st.markdown(f"**Aktueller Kurs:** {current:.2f}")
+    st.markdown(f"**All Time High:** {ath:.2f}")
+    st.markdown(f"**Tagesperformance:** {daily:.2f}%")
+    st.markdown(f"**Monatsperformance:** {monthly:.2f}%")
+    st.markdown(f"**Jahresperformance:** {yearly:.2f}%")
+    st.markdown("---")
