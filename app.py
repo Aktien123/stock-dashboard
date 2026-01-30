@@ -64,7 +64,7 @@ def create_line_chart(df):
     fig.update_layout(
         height=300,
         xaxis_title="Datum",
-        yaxis_title="Kurs USD",
+        yaxis_title="Kurs EUR",
         margin=dict(l=10,r=10,t=30,b=10)
     )
     return fig
