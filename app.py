@@ -112,7 +112,8 @@ for i, ticker in enumerate(tickers):
             st.plotly_chart(fig, use_container_width=True)
             st.markdown(f"**Aktueller Kurs:** {current:.2f}")
             st.markdown(f"**All Time High:** {ath:.2f}")
-            st.markdown(f"**△ ATH:** {colorize(delta_ath)}", unsafe_allow_html=True)  # neue KPI
+            st.markdown(f"**△ ATH:** {colorize(delta_ath)}", unsafe_allow_html=True)
             st.markdown(f"**Tagesperformance:** {colorize(daily)}", unsafe_allow_html=True)
             st.markdown(f"**Monatsperformance:** {colorize(monthly)}", unsafe_allow_html=True)
-            st.markdown(f"**Jahresperformance:** {colorize(yearly)}", unsafe_allow_h
+            st.markdown(f"**Jahresperformance:** {colorize(yearly)}", unsafe_allow_html=True)
+            st.markdown("---")
