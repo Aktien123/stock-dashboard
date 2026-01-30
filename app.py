@@ -52,10 +52,14 @@ def create_line_chart(df, ticker):
     return fig
 
 def colorize(val):
-    if val is None:
+    # val kann None oder Series sein
+    try:
+        val = float(val)
+    except (TypeError, ValueError):
         return "n/a"
     color = "green" if val >= 0 else "red"
     return f"<span style='color: {color}'>{val:.2f}%</span>"
+
 
 cols = st.columns(3)
 for idx, ticker in enumerate(tickers):
