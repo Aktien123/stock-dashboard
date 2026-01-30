@@ -27,8 +27,7 @@ st.markdown(
 # Header (kann durch Bild ersetzt werden)
 # --------------------------
 # st.title("📊 ETF & ETC Dashboard")
-# Bild als Header einsetzen (lokale Datei oder URL)
-st.image("header.png", use_column_width=True)
+st.image("header.png", use_column_width=True)  # <-- eigenes Bild verwenden
 
 # --------------------------
 # Liste der 6 Ticker
@@ -119,8 +118,7 @@ for i, ticker in enumerate(tickers):
         else:
             # Überschrift: Name + Ticker + ISIN mit 4 Leerzeichen
             st.markdown(
-                f"**{info['name']}**  \n"
-                f"<small>Ticker: {ticker}&nbsp;&nbsp;&nbsp;&nbsp;ISIN: {info['isin']}</small>",
+                f"**{info['name']}**  \n<small>Ticker: {ticker}&nbsp;&nbsp;&nbsp;&nbsp;ISIN: {info['isin']}</small>",
                 unsafe_allow_html=True
             )
 
