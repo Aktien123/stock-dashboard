@@ -45,7 +45,7 @@ ticker_info = {
 # --------------------------
 def get_data(ticker):
     try:
-        df = yf.Ticker(ticker).history(period="6mo")
+        df = yf.Ticker(ticker).history(period="1y")  # <-- hier 1 Jahr
         if df.empty or len(df) < 2:
             return None
         df.index = pd.to_datetime(df.index)
