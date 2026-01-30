@@ -18,15 +18,33 @@ def get_data(ticker):
     return df
 
 def calc_kpis(df):
-    if df.empty or df["Close"].isnull().all():
-        # Keine Daten → KPIs auf 0 oder None
+    # 1️⃣ Prüfen, ob DataFrame leer
+    if df.empty:
+        return None, None, None, None, None
+    
+    # 2️⃣ Prüfen, ob Close-Spalte nur NaN enthält
+    if df["Close"].isnull().all():
         return None, None, None, None, None
 
+    # 3️⃣ KPIs berechnen
     current = df["Close"].iloc[-1]
     ath = df["Close"].max()
-    daily = (df["Close"].iloc[-1] - df["Close"].iloc[-2]) / df["Close"].iloc[-2] * 100
-    monthly = (df["Close"].iloc[-1] - df["Close"].iloc[-21]) / df["Close"].iloc[-21] * 100
+    
+    # Tagesperformance
+    if len(df) >= 2:
+        daily = (df["Close"].iloc[-1] - df["Close"].iloc[-2]) / df["Close"].iloc[-2] * 100
+    else:
+        daily = None
+    
+    # Monatsperformance (ca. 21 Handelstage)
+    if len(df) >= 22:
+        monthly = (df["Close"].iloc[-1] - df["Close"].iloc[-21]) / df["Close"].iloc[-21] * 100
+    else:
+        monthly = None
+    
+    # Jahresperformance
     yearly = (df["Close"].iloc[-1] - df["Close"].iloc[0]) / df["Close"].iloc[0] * 100
+    
     return current, ath, daily, monthly, yearly
 
 def create_chart(df, ticker):
@@ -53,7 +71,9 @@ else:
     st.plotly_chart(fig, use_container_width=True)
     st.markdown(f"**Aktueller Kurs:** {current:.2f}")
     st.markdown(f"**All Time High:** {ath:.2f}")
-    st.markdown(f"**Tagesperformance:** {daily:.2f}%")
-    st.markdown(f"**Monatsperformance:** {monthly:.2f}%")
+    if daily is not None:
+        st.markdown(f"**Tagesperformance:** {daily:.2f}%")
+    if monthly is not None:
+        st.markdown(f"**Monatsperformance:** {monthly:.2f}%")
     st.markdown(f"**Jahresperformance:** {yearly:.2f}%")
     st.markdown("---")
