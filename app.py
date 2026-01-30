@@ -3,7 +3,10 @@ import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
 
-st.set_page_config(page_title="ETF Dashboard", layout="wide")
+# --------------------------
+# Streamlit Layout
+# --------------------------
+st.set_page_config(page_title="ETF & ETC Dashboard", layout="wide")
 st.title("📊 ETF & ETC Dashboard")
 
 # --------------------------
@@ -89,8 +92,11 @@ for i, ticker in enumerate(tickers):
         if df is None or fig is None:
             st.error(f"Keine Daten für {ticker} gefunden.")
         else:
-            # Überschrift in zwei Zeilen
-            st.markdown(f"**{info['name']}**  \n<small>Ticker: {ticker}  ISIN: {info['isin']}</small>", unsafe_allow_html=True)
+            # Überschrift: Name + Ticker + ISIN mit 4 Leerzeichen
+            st.markdown(
+                f"**{info['name']}**  \n<small>Ticker: {ticker}&nbsp;&nbsp;&nbsp;&nbsp;ISIN: {info['isin']}</small>",
+                unsafe_allow_html=True
+            )
             st.plotly_chart(fig, use_container_width=True)
             st.markdown(f"**Aktueller Kurs:** {current:.2f}")
             st.markdown(f"**All Time High:** {ath:.2f}")
