@@ -39,14 +39,15 @@ def get_data(ticker):
 
 def calc_kpis(df):
     if df is None or len(df) < 2:
-        return None, None, None, None, None
+        return None, None, None, None, None, None
     close = df['Close']
     current = float(close.iloc[-1])
     ath = float(close.max())
     daily = float((close.iloc[-1]-close.iloc[-2])/close.iloc[-2]*100)
     monthly = float((close.iloc[-1]-close.iloc[max(0,len(close)-22)])/close.iloc[max(0,len(close)-22)]*100) if len(close) >=22 else None
     yearly = float((close.iloc[-1]-close.iloc[0])/close.iloc[0]*100)
-    return current, ath, daily, monthly, yearly
+    delta_ath = float((ath - current) / ath * 100)  # neue KPI △ ATH
+    return current, ath, daily, monthly, yearly, delta_ath
 
 def colorize(val):
     try:
@@ -59,7 +60,7 @@ def colorize(val):
 def create_line_chart(df, daily=None):
     if df is None or len(df) < 2:
         return None
-    # Farbe nach Tagesperformance
+    # Linienfarbe nach Tagesperformance
     if daily is None:
         line_color = "blue"
     elif daily >= 0:
@@ -80,7 +81,7 @@ def create_line_chart(df, daily=None):
         xaxis_title="Datum",
         yaxis_title="Kurs",
         margin=dict(l=10,r=10,t=30,b=10),
-        plot_bgcolor="rgba(0,0,0,0)"
+        plot_bgcolor="rgba(0,0,0,0)"  # transparent
     )
     return fig
 
@@ -94,7 +95,7 @@ for i, ticker in enumerate(tickers):
     col = row[i % 3]
 
     df = get_data(ticker)
-    current, ath, daily, monthly, yearly = calc_kpis(df)
+    current, ath, daily, monthly, yearly, delta_ath = calc_kpis(df)
     fig = create_line_chart(df, daily=daily)
 
     info = ticker_info.get(ticker, {"name": ticker, "isin": ""})
@@ -103,6 +104,7 @@ for i, ticker in enumerate(tickers):
         if df is None or fig is None:
             st.error(f"Keine Daten für {ticker} gefunden.")
         else:
+            # Überschrift Name + Ticker + ISIN mit 4 Leerzeichen
             st.markdown(
                 f"**{info['name']}**  \n<small>Ticker: {ticker}&nbsp;&nbsp;&nbsp;&nbsp;ISIN: {info['isin']}</small>",
                 unsafe_allow_html=True
@@ -110,7 +112,7 @@ for i, ticker in enumerate(tickers):
             st.plotly_chart(fig, use_container_width=True)
             st.markdown(f"**Aktueller Kurs:** {current:.2f}")
             st.markdown(f"**All Time High:** {ath:.2f}")
+            st.markdown(f"**△ ATH:** {colorize(delta_ath)}", unsafe_allow_html=True)  # neue KPI
             st.markdown(f"**Tagesperformance:** {colorize(daily)}", unsafe_allow_html=True)
             st.markdown(f"**Monatsperformance:** {colorize(monthly)}", unsafe_allow_html=True)
-            st.markdown(f"**Jahresperformance:** {colorize(yearly)}", unsafe_allow_html=True)
-            st.markdown("---")
+            st.markdown(f"**Jahresperformance:** {colorize(yearly)}", unsafe_allow_h
