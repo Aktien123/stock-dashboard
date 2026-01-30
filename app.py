@@ -1,5 +1,6 @@
 import streamlit as st
 import yfinance as yf
+import pandas as pd
 import plotly.graph_objects as go
 
 st.set_page_config(page_title="Stock Dashboard", layout="wide")
@@ -42,21 +43,26 @@ def create_chart(df, ticker):
     if df is None or df.empty or df["Close"].dropna().empty:
         return None
 
-    df_chart = df[["Close"]].copy()
-    df_chart = df_chart.reset_index()  # Index (Datum) → Spalte
-    if "Date" not in df_chart.columns:
-        df_chart.rename(columns={df_chart.columns[0]: "Date"}, inplace=True)
+    # Index in Spalte umwandeln
+    df_chart = df.copy().reset_index()
+    if 'Date' not in df_chart.columns:
+        df_chart.rename(columns={df_chart.columns[0]: 'Date'}, inplace=True)
+
+    # Datumsspalte sicher in datetime
+    df_chart['Date'] = pd.to_datetime(df_chart['Date'])
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(
-        x=df_chart["Date"],
-        y=df_chart["Close"],
+        x=df_chart['Date'],
+        y=df_chart['Close'],
         name=ticker,
+        mode='lines',
         line=dict(color='blue')
     ))
+
     fig.update_layout(
         height=250,
-        margin=dict(l=10,r=10,t=30,b=10),
+        margin=dict(l=10, r=10, t=30, b=10),
         title=ticker,
         xaxis_title="Datum",
         yaxis_title="Kurs USD"
