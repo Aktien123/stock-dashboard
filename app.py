@@ -7,6 +7,22 @@ import plotly.graph_objects as go
 # Streamlit Layout
 # --------------------------
 st.set_page_config(page_title="ETF & ETC Dashboard", layout="wide")
+
+# --------------------------
+# Skalierung auf 75% per CSS
+# --------------------------
+st.markdown(
+    """
+    <style>
+    .main > div.block-container {
+        transform: scale(0.75);
+        transform-origin: top left;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 st.title("📊 ETF & ETC Dashboard")
 
 # --------------------------
@@ -46,7 +62,7 @@ def calc_kpis(df):
     daily = float((close.iloc[-1]-close.iloc[-2])/close.iloc[-2]*100)
     monthly = float((close.iloc[-1]-close.iloc[max(0,len(close)-22)])/close.iloc[max(0,len(close)-22)]*100) if len(close) >=22 else None
     yearly = float((close.iloc[-1]-close.iloc[0])/close.iloc[0]*100)
-    delta_ath = float((current - ath) / ath * 100)  # korrigierte Formel
+    delta_ath = float((current - ath) / ath * 100)
     return current, ath, daily, monthly, yearly, delta_ath
 
 def colorize(val):
@@ -60,14 +76,7 @@ def colorize(val):
 def create_line_chart(df, daily=None):
     if df is None or len(df) < 2:
         return None
-    # Linienfarbe nach Tagesperformance
-    if daily is None:
-        line_color = "blue"
-    elif daily >= 0:
-        line_color = "green"
-    else:
-        line_color = "red"
-
+    line_color = "green" if daily is not None and daily >= 0 else "red"
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=df.index,
@@ -81,7 +90,7 @@ def create_line_chart(df, daily=None):
         xaxis_title="Datum",
         yaxis_title="Kurs",
         margin=dict(l=10,r=10,t=30,b=10),
-        plot_bgcolor="rgba(0,0,0,0)"  # transparent
+        plot_bgcolor="rgba(0,0,0,0)"
     )
     return fig
 
@@ -97,28 +106,23 @@ for i, ticker in enumerate(tickers):
     df = get_data(ticker)
     current, ath, daily, monthly, yearly, delta_ath = calc_kpis(df)
     fig = create_line_chart(df, daily=daily)
-
     info = ticker_info.get(ticker, {"name": ticker, "isin": ""})
 
     with col:
         if df is None or fig is None:
             st.error(f"Keine Daten für {ticker} gefunden.")
         else:
-            # Überschrift Name + Ticker + ISIN mit 4 Leerzeichen
             st.markdown(
                 f"**{info['name']}**  \n<small>Ticker: {ticker}&nbsp;&nbsp;&nbsp;&nbsp;ISIN: {info['isin']}</small>",
                 unsafe_allow_html=True
             )
             st.plotly_chart(fig, use_container_width=True)
 
-            # KPI nebeneinander in 2 Spalten
             kpi_cols = st.columns(2)
-
             with kpi_cols[0]:
                 st.markdown(f"**Aktueller Kurs:** {current:.2f}")
                 st.markdown(f"**All Time High:** {ath:.2f}")
                 st.markdown(f"**△ ATH:** {colorize(delta_ath)}", unsafe_allow_html=True)
-
             with kpi_cols[1]:
                 st.markdown(f"**Tagesperformance:** {colorize(daily)}", unsafe_allow_html=True)
                 st.markdown(f"**Monatsperformance:** {colorize(monthly)}", unsafe_allow_html=True)
