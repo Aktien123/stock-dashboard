@@ -39,10 +39,14 @@ def calc_kpis(df):
     return current, ath, daily, monthly, yearly
 
 def create_chart(df, ticker):
+    if df is None or df.empty or df["Close"].dropna().empty:
+        return None  # Kein Chart, wenn keine Daten
+
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=df.index, y=df["Close"], name=ticker, line=dict(color='blue')))
     fig.update_layout(height=250, margin=dict(l=10,r=10,t=30,b=10), title=ticker)
     return fig
+
 
 # --- Layout: 3 Spalten, 2 Charts pro Spalte ---
 cols = st.columns(3)
@@ -50,13 +54,15 @@ for idx, ticker in enumerate(tickers):
     col = cols[idx % 3]
     df = get_data(ticker)
     current, ath, daily, monthly, yearly = calc_kpis(df)
-    fig = create_chart(df, ticker)
+fig = create_chart(df, ticker)
 
-    with col:
-        if current is None:
-            st.error(f"Keine Daten für {ticker} gefunden.")
-        else:
-            st.plotly_chart(fig, use_container_width=True)
+with col:
+    if current is None or fig is None:
+        st.error(f"Keine Daten für {ticker} gefunden.")
+    else:
+        st.plotly_chart(fig, use_container_width=True)
+    
+
 
             # Farbliche Performance
             def colorize(val):
