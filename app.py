@@ -21,7 +21,7 @@ def calc_kpis(df):
     if df is None or df.empty:
         return None, None, None, None, None
 
-    close_series = df["Close"].dropna()  # Nur gültige Werte
+    close_series = df["Close"].dropna()
     if len(close_series) == 0:
         return None, None, None, None, None
 
@@ -40,29 +40,26 @@ def calc_kpis(df):
 
 def create_chart(df, ticker):
     if df is None or df.empty or df["Close"].dropna().empty:
-        return None  # Kein Chart, wenn keine Daten
-
+        return None
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=df.index, y=df["Close"], name=ticker, line=dict(color='blue')))
     fig.update_layout(height=250, margin=dict(l=10,r=10,t=30,b=10), title=ticker)
     return fig
 
-
-# --- Layout: 3 Spalten, 2 Charts pro Spalte ---
+# --- Layout: 3 Spalten ---
 cols = st.columns(3)
+
 for idx, ticker in enumerate(tickers):
     col = cols[idx % 3]
     df = get_data(ticker)
     current, ath, daily, monthly, yearly = calc_kpis(df)
-fig = create_chart(df, ticker)
+    fig = create_chart(df, ticker)
 
-with col:
-    if current is None or fig is None:
-        st.error(f"Keine Daten für {ticker} gefunden.")
-    else:
-        st.plotly_chart(fig, use_container_width=True)
-    
-
+    with col:
+        if current is None or fig is None:
+            st.error(f"Keine Daten für {ticker} gefunden.")
+        else:
+            st.plotly_chart(fig, use_container_width=True)
 
             # Farbliche Performance
             def colorize(val):
@@ -74,5 +71,4 @@ with col:
             st.markdown(f"**All Time High:** {ath:.2f}")
             st.markdown(f"**Tagesperformance:** {colorize(daily)}", unsafe_allow_html=True)
             st.markdown(f"**Monatsperformance:** {colorize(monthly)}", unsafe_allow_html=True)
-            st.markdown(f"**Jahresperformance:** {colorize(yearly)}", unsafe_allow_html=True)
-            st.markdown("---")
+            st.markdown(f"**Jahre**
