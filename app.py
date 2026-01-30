@@ -12,7 +12,7 @@ tickers = ["MSFT", "AAPL", "GOOGL", "AMZN", "TSLA", "NVDA"]
 # --- Funktionen ---
 def get_data(ticker):
     try:
-        df = yf.download(ticker, period="1y", interval="1d")
+        df = yf.download(ticker, period="6mo", interval="1d")  # 6 Monate Daten für übersichtliche Charts
         df.dropna(inplace=True)
         return df
     except:
@@ -28,7 +28,6 @@ def calc_kpis(df):
 
     current = float(close_series.iloc[-1])
     ath = float(close_series.max())
-
     daily = (close_series.iloc[-1] - close_series.iloc[-2]) / close_series.iloc[-2] * 100 if len(close_series) >= 2 else None
     monthly = (close_series.iloc[-1] - close_series.iloc[-21]) / close_series.iloc[-21] * 100 if len(close_series) >= 22 else None
     yearly = (close_series.iloc[-1] - close_series.iloc[0]) / close_series.iloc[0] * 100
@@ -39,29 +38,23 @@ def calc_kpis(df):
 
     return current, ath, daily, monthly, yearly
 
-def create_chart(df, ticker):
-    if df is None or df.empty or df["Close"].dropna().empty:
+def create_line_chart(df, ticker):
+    if df is None or df.empty:
         return None
 
-    # Index in Spalte umwandeln
-    df_chart = df.copy().reset_index()
-    if 'Date' not in df_chart.columns:
-        df_chart.rename(columns={df_chart.columns[0]: 'Date'}, inplace=True)
-
-    # Datumsspalte sicher in datetime
-    df_chart['Date'] = pd.to_datetime(df_chart['Date'])
+    df_chart = df.reset_index()
+    df_chart['Date'] = pd.to_datetime(df_chart['Date'] if 'Date' in df_chart.columns else df_chart.columns[0])
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=df_chart['Date'],
         y=df_chart['Close'],
-        name=ticker,
         mode='lines',
-        line=dict(color='blue')
+        line=dict(color='blue'),
+        name=ticker
     ))
-
     fig.update_layout(
-        height=250,
+        height=300,
         margin=dict(l=10, r=10, t=30, b=10),
         title=ticker,
         xaxis_title="Datum",
@@ -81,7 +74,7 @@ for idx, ticker in enumerate(tickers):
     col = cols[idx % 3]
     df = get_data(ticker)
     current, ath, daily, monthly, yearly = calc_kpis(df)
-    fig = create_chart(df, ticker)
+    fig = create_line_chart(df, ticker)
 
     with col:
         if current is None or fig is None:
