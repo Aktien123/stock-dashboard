@@ -5,7 +5,6 @@ import plotly.graph_objects as go
 st.set_page_config(page_title="Stock Dashboard", layout="wide")
 st.title("📊 Aktien Dashboard")
 
-# --- Liste der 6 Aktien ---
 tickers = ["MSFT", "AAPL", "GOOGL", "AMZN", "TSLA", "NVDA"]
 
 # --- Funktionen ---
@@ -18,20 +17,24 @@ def get_data(ticker):
         return None
 
 def calc_kpis(df):
+    # 1️⃣ Prüfen ob DataFrame None oder leer
     if df is None or df.empty:
         return None, None, None, None, None
     
-    # Sicherstellen, dass Close-Spalte Zahlen enthält
-    if df["Close"].isnull().all():
+    # 2️⃣ Prüfen ob Close-Spalte nur NaN enthält
+    close_series = df["Close"]
+    if close_series.isnull().all():
         return None, None, None, None, None
 
-    current = df["Close"].iloc[-1]
-    ath = df["Close"].max()
+    # 3️⃣ KPIs berechnen
+    current = close_series.iloc[-1]
+    ath = close_series.max()
     
-    daily = (df["Close"].iloc[-1] - df["Close"].iloc[-2]) / df["Close"].iloc[-2] * 100 if len(df) >= 2 else None
-    monthly = (df["Close"].iloc[-1] - df["Close"].iloc[-21]) / df["Close"].iloc[-21] * 100 if len(df) >= 22 else None
-    yearly = (df["Close"].iloc[-1] - df["Close"].iloc[0]) / df["Close"].iloc[0] * 100
+    daily = (close_series.iloc[-1] - close_series.iloc[-2]) / close_series.iloc[-2] * 100 if len(close_series) >= 2 else None
+    monthly = (close_series.iloc[-1] - close_series.iloc[-21]) / close_series.iloc[-21] * 100 if len(close_series) >= 22 else None
+    yearly = (close_series.iloc[-1] - close_series.iloc[0]) / close_series.iloc[0] * 100
     
+    # Alles als float zurückgeben
     return float(current), float(ath), float(daily) if daily is not None else None, float(monthly) if monthly is not None else None, float(yearly)
 
 def create_chart(df, ticker):
@@ -54,12 +57,9 @@ for i, ticker in enumerate(tickers):
             st.error(f"Keine Daten für {ticker} gefunden.")
         else:
             st.plotly_chart(fig, use_container_width=True)
-            
-            # KPIs nur anzeigen, wenn Zahlen vorhanden
             st.markdown(f"**Aktueller Kurs:** {current:.2f}" if current is not None else "**Aktueller Kurs:** n/a")
             st.markdown(f"**All Time High:** {ath:.2f}" if ath is not None else "**All Time High:** n/a")
             st.markdown(f"**Tagesperformance:** {daily:.2f}%" if daily is not None else "**Tagesperformance:** n/a")
             st.markdown(f"**Monatsperformance:** {monthly:.2f}%" if monthly is not None else "**Monatsperformance:** n/a")
             st.markdown(f"**Jahresperformance:** {yearly:.2f}%" if yearly is not None else "**Jahresperformance:** n/a")
-            
             st.markdown("---")
