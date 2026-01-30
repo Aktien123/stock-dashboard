@@ -80,7 +80,7 @@ def create_line_chart(df, daily=None):
         xaxis_title="Datum",
         yaxis_title="Kurs",
         margin=dict(l=10,r=10,t=30,b=10),
-        plot_bgcolor="#f9f9f9"
+        plot_bgcolor="rgba(0,0,0,0)"
     )
     return fig
 
