@@ -17,25 +17,29 @@ def get_data(ticker):
         return None
 
 def calc_kpis(df):
-    # 1️⃣ Prüfen ob DataFrame None oder leer
+    # Prüfen ob df None oder leer
     if df is None or df.empty:
         return None, None, None, None, None
-    
-    # 2️⃣ Prüfen ob Close-Spalte nur NaN enthält
+
     close_series = df["Close"]
-    if close_series.isnull().all():
+
+    # Prüfen, ob Close-Spalte nur NaN enthält – safe
+    if bool(close_series.notnull().any()) == False:
         return None, None, None, None, None
 
-    # 3️⃣ KPIs berechnen
-    current = close_series.iloc[-1]
-    ath = close_series.max()
+    current = float(close_series.iloc[-1])
+    ath = float(close_series.max())
     
     daily = (close_series.iloc[-1] - close_series.iloc[-2]) / close_series.iloc[-2] * 100 if len(close_series) >= 2 else None
     monthly = (close_series.iloc[-1] - close_series.iloc[-21]) / close_series.iloc[-21] * 100 if len(close_series) >= 22 else None
     yearly = (close_series.iloc[-1] - close_series.iloc[0]) / close_series.iloc[0] * 100
-    
-    # Alles als float zurückgeben
-    return float(current), float(ath), float(daily) if daily is not None else None, float(monthly) if monthly is not None else None, float(yearly)
+
+    # Alle KPIs als float oder None zurückgeben
+    daily = float(daily) if daily is not None else None
+    monthly = float(monthly) if monthly is not None else None
+    yearly = float(yearly) if yearly is not None else None
+
+    return current, ath, daily, monthly, yearly
 
 def create_chart(df, ticker):
     fig = go.Figure()
@@ -53,13 +57,17 @@ for i, ticker in enumerate(tickers):
     fig = create_chart(df, ticker)
     
     with col:
-        if current is None:
-            st.error(f"Keine Daten für {ticker} gefunden.")
-        else:
-            st.plotly_chart(fig, use_container_width=True)
-            st.markdown(f"**Aktueller Kurs:** {current:.2f}" if current is not None else "**Aktueller Kurs:** n/a")
-            st.markdown(f"**All Time High:** {ath:.2f}" if ath is not None else "**All Time High:** n/a")
-            st.markdown(f"**Tagesperformance:** {daily:.2f}%" if daily is not None else "**Tagesperformance:** n/a")
-            st.markdown(f"**Monatsperformance:** {monthly:.2f}%" if monthly is not None else "**Monatsperformance:** n/a")
-            st.markdown(f"**Jahresperformance:** {yearly:.2f}%" if yearly is not None else "**Jahresperformance:** n/a")
+ current, ath, daily, monthly, yearly = calc_kpis(df)
+
+if current is None:
+    st.error(f"Keine Daten für {ticker} gefunden.")
+else:
+    st.plotly_chart(fig, use_container_width=True)
+    st.markdown(f"**Aktueller Kurs:** {current:.2f}" if current is not None else "**Aktueller Kurs:** n/a")
+    st.markdown(f"**All Time High:** {ath:.2f}" if ath is not None else "**All Time High:** n/a")
+    st.markdown(f"**Tagesperformance:** {daily:.2f}%" if daily is not None else "**Tagesperformance:** n/a")
+    st.markdown(f"**Monatsperformance:** {monthly:.2f}%" if monthly is not None else "**Monatsperformance:** n/a")
+    st.markdown(f"**Jahresperformance:** {yearly:.2f}%" if yearly is not None else "**Jahresperformance:** n/a")
+    st.markdown("---")
+
             st.markdown("---")
