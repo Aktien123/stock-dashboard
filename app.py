@@ -18,21 +18,30 @@ period_map = {
 }
 
 # --------------------------
-# Header + Toggle inline rechts daneben
+# Header + Toggle kompakt und vertikal zentriert
 # --------------------------
-# Zwei Spalten: Überschrift schmal, Toggle nimmt Rest
-col_title, col_toggle = st.columns([0.2, 0.8])
+col_title, col_toggle = st.columns([0.1, 0.9])  # Header schmal, Toggle nimmt Rest
 
 with col_title:
-    st.markdown("### ETF & ETC Dashboard", unsafe_allow_html=True)
+    st.markdown("""
+    <div style="display: flex; align-items: center; height: 100%;">
+        <h3 style="margin: 0; padding-right: 5px;">ETF & ETC Dashboard</h3>
+    </div>
+    """, unsafe_allow_html=True)
 
 with col_toggle:
+    st.markdown("""
+    <div style="display: flex; align-items: center; height: 100%;">
+    """, unsafe_allow_html=True)
+
     selected_period_label = st.radio(
-        "",  # kein Label
+        "",  # Kein Label
         options=list(period_map.keys()),
         horizontal=True,
         index=1  # Default = 1Y
     )
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
 selected_period = period_map[selected_period_label]
 
