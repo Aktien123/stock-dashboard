@@ -13,6 +13,9 @@ st.set_page_config(page_title="ETF & ETC Dashboard", layout="wide")
 # --------------------------
 col_title, col_toggle = st.columns([3, 1])
 
+# Default-Value definieren, falls Streamlit reloads
+selected_period_label = "1Y"
+
 with col_title:
     st.title("ETF & ETC Dashboard")
 
@@ -21,7 +24,7 @@ with col_toggle:
         "Zeitraum",
         options=["6M", "1Y", "3Y"],
         horizontal=True,
-        index=1
+        index=["6M", "1Y", "3Y"].index(selected_period_label)
     )
 
 selected_period = period_map[selected_period_label]
