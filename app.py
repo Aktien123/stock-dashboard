@@ -17,7 +17,7 @@ st.markdown(
     """
     <style>
     .main > div.block-container {
-        padding-top: 0.25rem;      /* Standard ~6rem → deutlich höher */
+        padding-top: 0rem;      /* Standard ~6rem → deutlich höher */
         transform: scale(0.75);
         transform-origin: top left;
     }
