@@ -18,27 +18,21 @@ period_map = {
 }
 
 # --------------------------
-# Header + Zeitraum Toggle direkt hinter der Überschrift
+# Header + Toggle inline rechts daneben
 # --------------------------
-# Nur eine Spalte verwenden
-col = st.columns(1)[0]
+# Zwei Spalten: Überschrift schmal, Toggle nimmt Rest
+col_title, col_toggle = st.columns([0.2, 0.8])
 
-with col:
-    # Flexbox für Inline-Anordnung von Titel + Toggle
-    st.markdown("""
-    <div style="display: flex; align-items: center;">
-        <h3 style="margin-right: 10px;">ETF & ETC Dashboard</h3>
-        <div>
-    """, unsafe_allow_html=True)
+with col_title:
+    st.markdown("### ETF & ETC Dashboard", unsafe_allow_html=True)
 
+with col_toggle:
     selected_period_label = st.radio(
-        "",  # Kein Label
+        "",  # kein Label
         options=list(period_map.keys()),
         horizontal=True,
         index=1  # Default = 1Y
     )
-
-    st.markdown("</div></div>", unsafe_allow_html=True)
 
 selected_period = period_map[selected_period_label]
 
