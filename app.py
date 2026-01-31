@@ -15,6 +15,7 @@ st.markdown(
     """
     <style>
     .main > div.block-container {
+        padding-top: 1rem;      /* Standard ~6rem → deutlich höher */
         transform: scale(0.75);
         transform-origin: top left;
     }
@@ -22,6 +23,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 st.title("ETF & ETC Dashboard")
 
