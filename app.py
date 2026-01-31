@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 # --------------------------
 st.set_page_config(page_title="ETF & ETC Dashboard", layout="wide")
 
-padding-top: 0.25rem;
+
 
 # --------------------------
 # Skalierung auf 75% per CSS
@@ -17,7 +17,7 @@ st.markdown(
     """
     <style>
     .main > div.block-container {
-        padding-top: 1rem;      /* Standard ~6rem → deutlich höher */
+        padding-top: 0.25rem;      /* Standard ~6rem → deutlich höher */
         transform: scale(0.75);
         transform-origin: top left;
     }
