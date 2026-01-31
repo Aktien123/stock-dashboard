@@ -27,7 +27,7 @@ with col_title:
 
 with col_toggle:
     selected_period_label = st.radio(
-        "",  # Kein Label, damit inline
+        "",  # Kein Label, kompakt inline
         options=list(period_map.keys()),
         horizontal=True,
         index=1  # Default = 1Y
@@ -49,18 +49,15 @@ st.markdown("""
 # --------------------------
 # Skalierung auf 75% per CSS
 # --------------------------
-st.markdown(
-    """
-    <style>
-    .main > div.block-container {
-        padding-top: 0rem;
-        transform: scale(0.75);
-        transform-origin: top left;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+st.markdown("""
+<style>
+.main > div.block-container {
+    padding-top: 0rem;
+    transform: scale(0.75);
+    transform-origin: top left;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # --------------------------
 # Liste der 6 Ticker
@@ -93,5 +90,59 @@ def get_data(ticker, period):
 def calc_kpis(df):
     if df is None or len(df) < 2:
         return None, None, None, None, None, None
+
     close = df['Close']
-    current = float(close.i
+    current = float(close.iloc[-1])
+    ath = float(close.max())
+    daily = float((close.iloc[-1] - close.iloc[-2]) / close.iloc[-2] * 100)
+
+    # Monatsperformance (22 Handelstage)
+    if len(close) >= 22:
+        monthly = float((close.iloc[-1] - close.iloc[-22]) / close.iloc[-22] * 100)
+    else:
+        monthly = None
+
+    # Jahresperformance
+    yearly = float((close.iloc[-1] - close.iloc[0]) / close.iloc[0] * 100)
+
+    # Delta zum ATH
+    delta_ath = float((current - ath) / ath * 100)
+
+    return current, ath, daily, monthly, yearly, delta_ath
+
+def colorize(val):
+    try:
+        val = float(val)
+    except (TypeError, ValueError):
+        return "n/a"
+    color = "green" if val >= 0 else "red"
+    return f"<span style='color: {color}'>{val:.2f}%</span>"
+
+def create_line_chart(df, daily=None):
+    if df is None or len(df) < 2:
+        return None
+    line_color = "green" if daily is not None and daily >= 0 else "red"
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=df.index,
+        y=df['Close'],
+        mode='lines',
+        line=dict(color=line_color, width=2),
+        hovertemplate='Datum: %{x|%d.%m.%Y}<br>Kurs: %{y:.2f} EUR<extra></extra>'
+    ))
+    fig.update_layout(
+        height=300,
+        yaxis_title="EUR",
+        margin=dict(l=10,r=10,t=30,b=10),
+        plot_bgcolor="rgba(0,0,0,0)"
+    )
+    return fig
+
+# --------------------------
+# Dashboard Layout: 2 Reihen x 3 Spalten
+# --------------------------
+rows = [st.columns(3) for _ in range(2)]
+
+for i, ticker in enumerate(tickers):
+    row = rows[i // 3]
+    col = row
