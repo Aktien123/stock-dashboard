@@ -11,18 +11,18 @@ st.set_page_config(page_title="ETF & ETC Dashboard", layout="wide")
 # --------------------------
 # Zeitraum Toggle
 # --------------------------
-period_map = {
-    "6M": "6mo",
-    "1Y": "1y",
-    "3Y": "3y"
-}
+col_title, col_toggle = st.columns([3, 1])
 
-selected_period_label = st.radio(
-    "Zeitraum",
-    options=["6M", "1Y", "3Y"],
-    horizontal=True,
-    index=1  # Default = 1Y
-)
+with col_title:
+    st.title("ETF & ETC Dashboard")
+
+with col_toggle:
+    selected_period_label = st.radio(
+        "Zeitraum",
+        options=["6M", "1Y", "3Y"],
+        horizontal=True,
+        index=1
+    )
 
 selected_period = period_map[selected_period_label]
 
@@ -45,7 +45,6 @@ st.markdown(
 )
 
 
-st.title("ETF & ETC Dashboard")
 
 # --------------------------
 # Liste der 6 Ticker
