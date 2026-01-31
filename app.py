@@ -34,7 +34,7 @@ st.title("ETF & ETC Dashboard")
 # --------------------------
 # Liste der 6 Ticker
 # --------------------------
-tickers = ["IWDA.AS", "VWCE.DE", "IS3N.DE", "IUSN.DE", "4GLD.DE", "XAD6.DE"]
+tickers = ["IWDA.AS", "VWCE.DE", "IS3N.DE", "IUSN.DE", "4GLD.DE", "WSLV.L"]
 
 # Mapping: Ticker → Name + ISIN
 ticker_info = {
@@ -43,7 +43,7 @@ ticker_info = {
     "IS3N.DE": {"name":"iShares Core MSCI Emerging Markets IMI UCITS ETF (Acc)","isin":"IE00BKM4GZ66"},
     "IUSN.DE": {"name":"iShares MSCI World Small Cap (Acc)","isin":"IE00BF4RFH31"},
     "4GLD.DE": {"name":"Xetra Gold ETC","isin":"DE000A0S9GB0"},
-    "XAD6.DE": {"name":"Xtrackers Physical Silver ETC","isin":"DE000A1E0HS6"}
+    "WSLV.L": {"name":"Xtrackers Physical Silver ETC","isin":"DE000A1E0HS6"}
 }
 
 # --------------------------
