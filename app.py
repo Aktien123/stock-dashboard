@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 st.set_page_config(page_title="ETF & ETC Dashboard", layout="wide")
 
 # --------------------------
-# Zeitraum Toggle
+# Zeitraum Mapping
 # --------------------------
 period_map = {
     "6M": "6mo",
@@ -17,35 +17,47 @@ period_map = {
     "3Y": "3y"
 }
 
-selected_period_label = st.radio(
-    "Zeitraum",
-    options=["6M", "1Y", "3Y"],
-    horizontal=True,
-    index=1  # Default = 1Y
-)
+# --------------------------
+# Header + Zeitraum Toggle nebeneinander
+# --------------------------
+col_title, col_toggle = st.columns([6, 1])  # Überschrift 6 Einheiten, Toggle 1 Einheit
+
+with col_title:
+    st.markdown("### ETF & ETC Dashboard", unsafe_allow_html=True)
+
+with col_toggle:
+    selected_period_label = st.radio(
+        "",  # Kein Label, kompakt inline
+        options=list(period_map.keys()),
+        horizontal=True,
+        index=1  # Default = 1Y
+    )
 
 selected_period = period_map[selected_period_label]
 
-
+# --------------------------
+# Optional: CSS für vertikale Zentrierung des Toggles
+# --------------------------
+st.markdown("""
+<style>
+[data-testid="stHorizontalBlock"] {
+    align-items: center;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # --------------------------
 # Skalierung auf 75% per CSS
 # --------------------------
-st.markdown(
-    """
-    <style>
-    .main > div.block-container {
-        padding-top: 0rem;      /* Standard ~6rem → deutlich höher */
-        transform: scale(0.75);
-        transform-origin: top left;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-
-st.title("ETF & ETC Dashboard")
+st.markdown("""
+<style>
+.main > div.block-container {
+    padding-top: 0rem;
+    transform: scale(0.75);
+    transform-origin: top left;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # --------------------------
 # Liste der 6 Ticker
@@ -78,13 +90,24 @@ def get_data(ticker, period):
 def calc_kpis(df):
     if df is None or len(df) < 2:
         return None, None, None, None, None, None
+
     close = df['Close']
     current = float(close.iloc[-1])
     ath = float(close.max())
-    daily = float((close.iloc[-1]-close.iloc[-2])/close.iloc[-2]*100)
-    monthly = float((close.iloc[-1]-close.iloc[max(0,len(close)-22)])/close.iloc[max(0,len(close)-22)]*100) if len(close) >=22 else None
-    yearly = float((close.iloc[-1]-close.iloc[0])/close.iloc[0]*100)
+    daily = float((close.iloc[-1] - close.iloc[-2]) / close.iloc[-2] * 100)
+
+    # Monatsperformance (22 Handelstage)
+    if len(close) >= 22:
+        monthly = float((close.iloc[-1] - close.iloc[-22]) / close.iloc[-22] * 100)
+    else:
+        monthly = None
+
+    # Jahresperformance
+    yearly = float((close.iloc[-1] - close.iloc[0]) / close.iloc[0] * 100)
+
+    # Delta zum ATH
     delta_ath = float((current - ath) / ath * 100)
+
     return current, ath, daily, monthly, yearly, delta_ath
 
 def colorize(val):
@@ -109,7 +132,6 @@ def create_line_chart(df, daily=None):
     ))
     fig.update_layout(
         height=300,
-        #xaxis_title="Datum",
         yaxis_title="EUR",
         margin=dict(l=10,r=10,t=30,b=10),
         plot_bgcolor="rgba(0,0,0,0)"
