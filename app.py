@@ -11,7 +11,7 @@ st.set_page_config(page_title="ETF & ETC Dashboard", layout="wide")
 # --------------------------
 # Zeitraum fest auf 1 Jahr
 # --------------------------
-selected_period = "1y"
+PERIOD = "1y"
 
 # --------------------------
 # Skalierung auf 75% per CSS
@@ -49,9 +49,10 @@ ticker_info = {
 # --------------------------
 # Funktionen
 # --------------------------
-def get_data(ticker, period):
+def get_data(ticker):
+    """Lädt die Kursdaten für 1 Jahr fest"""
     try:
-        df = yf.Ticker(ticker).history(period=period)
+        df = yf.Ticker(ticker).history(period=PERIOD)
         if df.empty or len(df) < 2:
             return None
         df.index = pd.to_datetime(df.index)
@@ -62,6 +63,7 @@ def get_data(ticker, period):
 def calc_kpis(df):
     if df is None or len(df) < 2:
         return None, None, None, None, None, None
+
     close = df['Close']
     current = float(close.iloc[-1])
     ath = float(close.max())
@@ -99,4 +101,38 @@ def create_line_chart(df, daily=None):
     )
     return fig
 
-# ---------------
+# --------------------------
+# Dashboard Layout: 2 Reihen x 3 Spalten
+# --------------------------
+rows = [st.columns(3) for _ in range(2)]
+
+for i, ticker in enumerate(tickers):
+    row = rows[i // 3]
+    col = row[i % 3]
+
+    df = get_data(ticker)
+    current, ath, daily, monthly, yearly, delta_ath = calc_kpis(df)
+    fig = create_line_chart(df, daily=daily)
+    info = ticker_info.get(ticker, {"name": ticker, "isin": ""})
+
+    with col:
+        if df is None or fig is None:
+            st.error(f"Keine Daten für {ticker} gefunden.")
+        else:
+            st.markdown(
+                f"**{info['name']}**  \n<small>Ticker: {ticker}&nbsp;&nbsp;&nbsp;&nbsp;ISIN: {info['isin']}</small>",
+                unsafe_allow_html=True
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+            kpi_cols = st.columns(2)
+            with kpi_cols[0]:
+                st.markdown(f"**Aktueller Kurs:** {current:.2f} EUR")
+                st.markdown(f"**All Time High:** {ath:.2f} EUR")
+                st.markdown(f"**△ ATH:** {colorize(delta_ath)}", unsafe_allow_html=True)
+            with kpi_cols[1]:
+                st.markdown(f"**Tagesperformance:** {colorize(daily)}", unsafe_allow_html=True)
+                st.markdown(f"**Monatsperformance:** {colorize(monthly)}", unsafe_allow_html=True)
+                st.markdown(f"**Jahresperformance:** {colorize(yearly)}", unsafe_allow_html=True)
+
+            st.markdown("---")
