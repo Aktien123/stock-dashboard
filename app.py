@@ -4,27 +4,29 @@ import pandas as pd
 import plotly.graph_objects as go
 
 # --------------------------
-# Streamlit Layout
+# Header + Zeitraum Toggle in einer Zeile
 # --------------------------
-st.set_page_config(page_title="ETF & ETC Dashboard", layout="wide")
+header_cols = st.columns([3, 1])
 
-# --------------------------
-# Zeitraum Toggle
-# --------------------------
-period_map = {
-    "6M": "6mo",
-    "1Y": "1y",
-    "3Y": "3y"
-}
+with header_cols[0]:
+    st.markdown("## 📊 ETF & ETC Dashboard")
 
-selected_period_label = st.radio(
-    "Zeitraum",
-    options=["6M", "1Y", "3Y"],
-    horizontal=True,
-    index=1  # Default = 1Y
-)
+with header_cols[1]:
+    period_map = {
+        "6M": "6mo",
+        "1Y": "1y",
+        "3Y": "3y"
+    }
+
+    selected_period_label = st.radio(
+        " ",
+        options=["6M", "1Y", "3Y"],
+        horizontal=True,
+        index=1
+    )
 
 selected_period = period_map[selected_period_label]
+
 
 
 # --------------------------
