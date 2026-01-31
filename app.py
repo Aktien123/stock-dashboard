@@ -8,6 +8,23 @@ import plotly.graph_objects as go
 # --------------------------
 st.set_page_config(page_title="ETF & ETC Dashboard", layout="wide")
 
+# --------------------------
+# Zeitraum Toggle
+# --------------------------
+period_map = {
+    "6M": "6mo",
+    "1Y": "1y",
+    "3Y": "3y"
+}
+
+selected_period_label = st.radio(
+    "Zeitraum",
+    options=["6M", "1Y", "3Y"],
+    horizontal=True,
+    index=1  # Default = 1Y
+)
+
+selected_period = period_map[selected_period_label]
 
 
 # --------------------------
@@ -47,9 +64,9 @@ ticker_info = {
 # --------------------------
 # Funktionen
 # --------------------------
-def get_data(ticker):
+def get_data(ticker, period):
     try:
-        df = yf.Ticker(ticker).history(period="1y")
+        df = yf.Ticker(ticker).history(period=period)
         if df.empty or len(df) < 2:
             return None
         df.index = pd.to_datetime(df.index)
@@ -107,7 +124,7 @@ for i, ticker in enumerate(tickers):
     row = rows[i // 3]
     col = row[i % 3]
 
-    df = get_data(ticker)
+    df = get_data(ticker, selected_period)
     current, ath, daily, monthly, yearly, delta_ath = calc_kpis(df)
     fig = create_line_chart(df, daily=daily)
     info = ticker_info.get(ticker, {"name": ticker, "isin": ""})
