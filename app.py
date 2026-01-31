@@ -9,54 +9,27 @@ import plotly.graph_objects as go
 st.set_page_config(page_title="ETF & ETC Dashboard", layout="wide")
 
 # --------------------------
-# Zeitraum Mapping
+# Zeitraum fest auf 1 Jahr
 # --------------------------
-period_map = {
-    "6M": "6mo",
-    "1Y": "1y",
-    "3Y": "3y"
-}
-
-# --------------------------
-# Header + Toggle kompakt und vertikal zentriert
-# --------------------------
-col_title, col_toggle = st.columns([0.1, 0.9])  # Header schmal, Toggle nimmt Rest
-
-with col_title:
-    st.markdown("""
-    <div style="display: flex; align-items: center; height: 100%;">
-        <h3 style="margin: 0; padding-right: 5px;">ETF & ETC Dashboard</h3>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col_toggle:
-    st.markdown("""
-    <div style="display: flex; align-items: center; height: 100%;">
-    """, unsafe_allow_html=True)
-
-    selected_period_label = st.radio(
-        "",  # Kein Label
-        options=list(period_map.keys()),
-        horizontal=True,
-        index=1  # Default = 1Y
-    )
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-selected_period = period_map[selected_period_label]
+selected_period = "1y"
 
 # --------------------------
 # Skalierung auf 75% per CSS
 # --------------------------
-st.markdown("""
-<style>
-.main > div.block-container {
-    padding-top: 0rem;
-    transform: scale(0.75);
-    transform-origin: top left;
-}
-</style>
-""", unsafe_allow_html=True)
+st.markdown(
+    """
+    <style>
+    .main > div.block-container {
+        padding-top: 0rem;
+        transform: scale(0.75);
+        transform-origin: top left;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+st.title("ETF & ETC Dashboard")
 
 # --------------------------
 # Liste der 6 Ticker
@@ -79,7 +52,7 @@ ticker_info = {
 def get_data(ticker, period):
     try:
         df = yf.Ticker(ticker).history(period=period)
-        if df is None or df.empty or len(df) < 2:
+        if df.empty or len(df) < 2:
             return None
         df.index = pd.to_datetime(df.index)
         return df
@@ -89,21 +62,13 @@ def get_data(ticker, period):
 def calc_kpis(df):
     if df is None or len(df) < 2:
         return None, None, None, None, None, None
-
     close = df['Close']
     current = float(close.iloc[-1])
     ath = float(close.max())
-    daily = float((close.iloc[-1] - close.iloc[-2]) / close.iloc[-2] * 100)
-
-    # Monatsperformance (22 Handelstage)
-    monthly = float((close.iloc[-1] - close.iloc[-22]) / close.iloc[-22] * 100) if len(close) >= 22 else None
-
-    # Jahresperformance
-    yearly = float((close.iloc[-1] - close.iloc[0]) / close.iloc[0] * 100)
-
-    # Delta zum ATH
+    daily = float((close.iloc[-1]-close.iloc[-2])/close.iloc[-2]*100)
+    monthly = float((close.iloc[-1]-close.iloc[max(0,len(close)-22)])/close.iloc[max(0,len(close)-22)]*100) if len(close) >=22 else None
+    yearly = float((close.iloc[-1]-close.iloc[0])/close.iloc[0]*100)
     delta_ath = float((current - ath) / ath * 100)
-
     return current, ath, daily, monthly, yearly, delta_ath
 
 def colorize(val):
@@ -134,38 +99,4 @@ def create_line_chart(df, daily=None):
     )
     return fig
 
-# --------------------------
-# Dashboard Layout: 2 Reihen x 3 Spalten
-# --------------------------
-rows = [st.columns(3) for _ in range(2)]
-
-for i, ticker in enumerate(tickers):
-    row = rows[i // 3]
-    col = row[i % 3]
-
-    df = get_data(ticker, selected_period)
-    current, ath, daily, monthly, yearly, delta_ath = calc_kpis(df)
-    fig = create_line_chart(df, daily=daily)
-    info = ticker_info.get(ticker, {"name": ticker, "isin": ""})
-
-    with col:
-        if df is None or fig is None:
-            st.error(f"Keine Daten für {ticker} gefunden.")
-        else:
-            st.markdown(
-                f"**{info['name']}**  \n<small>Ticker: {ticker}&nbsp;&nbsp;&nbsp;&nbsp;ISIN: {info['isin']}</small>",
-                unsafe_allow_html=True
-            )
-            st.plotly_chart(fig, use_container_width=True)
-
-            kpi_cols = st.columns(2)
-            with kpi_cols[0]:
-                st.markdown(f"**Aktueller Kurs:** {current:.2f} EUR")
-                st.markdown(f"**All Time High:** {ath:.2f} EUR")
-                st.markdown(f"**△ ATH:** {colorize(delta_ath)}", unsafe_allow_html=True)
-            with kpi_cols[1]:
-                st.markdown(f"**Tagesperformance:** {colorize(daily)}", unsafe_allow_html=True)
-                st.markdown(f"**Monatsperformance:** {colorize(monthly)}", unsafe_allow_html=True)
-                st.markdown(f"**Jahresperformance:** {colorize(yearly)}", unsafe_allow_html=True)
-
-            st.markdown("---")
+# ---------------
