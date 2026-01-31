@@ -20,6 +20,7 @@ period_map = {
 # --------------------------
 # Header + Zeitraum Toggle direkt hinter der Überschrift
 # --------------------------
+# Nur eine Spalte verwenden
 col = st.columns(1)[0]
 
 with col:
@@ -75,7 +76,7 @@ ticker_info = {
 def get_data(ticker, period):
     try:
         df = yf.Ticker(ticker).history(period=period)
-        if df.empty or len(df) < 2:
+        if df is None or df.empty or len(df) < 2:
             return None
         df.index = pd.to_datetime(df.index)
         return df
@@ -92,10 +93,7 @@ def calc_kpis(df):
     daily = float((close.iloc[-1] - close.iloc[-2]) / close.iloc[-2] * 100)
 
     # Monatsperformance (22 Handelstage)
-    if len(close) >= 22:
-        monthly = float((close.iloc[-1] - close.iloc[-22]) / close.iloc[-22] * 100)
-    else:
-        monthly = None
+    monthly = float((close.iloc[-1] - close.iloc[-22]) / close.iloc[-22] * 100) if len(close) >= 22 else None
 
     # Jahresperformance
     yearly = float((close.iloc[-1] - close.iloc[0]) / close.iloc[0] * 100)
@@ -114,4 +112,57 @@ def colorize(val):
     return f"<span style='color: {color}'>{val:.2f}%</span>"
 
 def create_line_chart(df, daily=None):
-    if
+    if df is None or len(df) < 2:
+        return None
+    line_color = "green" if daily is not None and daily >= 0 else "red"
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=df.index,
+        y=df['Close'],
+        mode='lines',
+        line=dict(color=line_color, width=2),
+        hovertemplate='Datum: %{x|%d.%m.%Y}<br>Kurs: %{y:.2f} EUR<extra></extra>'
+    ))
+    fig.update_layout(
+        height=300,
+        yaxis_title="EUR",
+        margin=dict(l=10,r=10,t=30,b=10),
+        plot_bgcolor="rgba(0,0,0,0)"
+    )
+    return fig
+
+# --------------------------
+# Dashboard Layout: 2 Reihen x 3 Spalten
+# --------------------------
+rows = [st.columns(3) for _ in range(2)]
+
+for i, ticker in enumerate(tickers):
+    row = rows[i // 3]
+    col = row[i % 3]
+
+    df = get_data(ticker, selected_period)
+    current, ath, daily, monthly, yearly, delta_ath = calc_kpis(df)
+    fig = create_line_chart(df, daily=daily)
+    info = ticker_info.get(ticker, {"name": ticker, "isin": ""})
+
+    with col:
+        if df is None or fig is None:
+            st.error(f"Keine Daten für {ticker} gefunden.")
+        else:
+            st.markdown(
+                f"**{info['name']}**  \n<small>Ticker: {ticker}&nbsp;&nbsp;&nbsp;&nbsp;ISIN: {info['isin']}</small>",
+                unsafe_allow_html=True
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+            kpi_cols = st.columns(2)
+            with kpi_cols[0]:
+                st.markdown(f"**Aktueller Kurs:** {current:.2f} EUR")
+                st.markdown(f"**All Time High:** {ath:.2f} EUR")
+                st.markdown(f"**△ ATH:** {colorize(delta_ath)}", unsafe_allow_html=True)
+            with kpi_cols[1]:
+                st.markdown(f"**Tagesperformance:** {colorize(daily)}", unsafe_allow_html=True)
+                st.markdown(f"**Monatsperformance:** {colorize(monthly)}", unsafe_allow_html=True)
+                st.markdown(f"**Jahresperformance:** {colorize(yearly)}", unsafe_allow_html=True)
+
+            st.markdown("---")
