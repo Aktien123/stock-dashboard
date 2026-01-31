@@ -9,11 +9,17 @@ import plotly.graph_objects as go
 st.set_page_config(page_title="ETF & ETC Dashboard", layout="wide")
 
 # --------------------------
-# Zeitraum Toggle
+# Zeitraum Mapping
 # --------------------------
-# Default für Streamlit setzen
-default_period = "1Y"
+period_map = {
+    "6M": "6mo",
+    "1Y": "1y",
+    "3Y": "3y"
+}
 
+# --------------------------
+# Header + Zeitraum Toggle nebeneinander
+# --------------------------
 col_title, col_toggle = st.columns([3, 1])
 
 with col_title:
@@ -22,19 +28,12 @@ with col_title:
 with col_toggle:
     selected_period_label = st.radio(
         "Zeitraum",
-        options=["6M", "1Y", "3Y"],
+        options=list(period_map.keys()),
         horizontal=True,
-        index=["6M", "1Y", "3Y"].index(default_period)
+        index=1  # Default = 1Y
     )
 
-# Sicherstellen, dass selected_period_label gültig ist
-if selected_period_label not in ["6M", "1Y", "3Y"]:
-    selected_period_label = default_period
-
 selected_period = period_map[selected_period_label]
-
-
-
 
 # --------------------------
 # Skalierung auf 75% per CSS
@@ -51,8 +50,6 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
-
 
 # --------------------------
 # Liste der 6 Ticker
@@ -116,7 +113,6 @@ def create_line_chart(df, daily=None):
     ))
     fig.update_layout(
         height=300,
-        #xaxis_title="Datum",
         yaxis_title="EUR",
         margin=dict(l=10,r=10,t=30,b=10),
         plot_bgcolor="rgba(0,0,0,0)"
