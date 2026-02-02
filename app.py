@@ -11,7 +11,8 @@ import time
 # --------------------------
 st.set_page_config(page_title="ETF & ETC Dashboard", layout="wide")
 PERIOD = "1y"
-REFRESH_SEC = 45  # Refresh Intervall
+KPI_REFRESH_SEC = 45   # KPI und Fortschrittsbalken
+CHART_REFRESH_MIN = 30 # Chart-Update alle 30 min
 TIMEZONE = "Europe/Berlin"
 
 # --------------------------
@@ -26,17 +27,6 @@ st.markdown("""
 }
 </style>
 """, unsafe_allow_html=True)
-
-# --------------------------
-# Header + Balken + Datum in einer Zeile
-# --------------------------
-header_col1, header_col2, header_col3 = st.columns([3,1,3])
-with header_col1:
-    st.title("ETF & ETC Dashboard")
-with header_col2:
-    progress_bar_placeholder = st.empty()  # Fortschrittsbalken
-with header_col3:
-    now_placeholder = st.empty()  # Datum / Uhrzeit
 
 # --------------------------
 # Ticker & Infos
@@ -105,16 +95,57 @@ def create_line_chart(df, daily=None):
     return fig
 
 # --------------------------
-# Fortschrittsbalken / Zeit bis Refresh
+# Session State für zyklisches Update
 # --------------------------
-for sec in range(REFRESH_SEC):
-    progress = (sec + 1)/REFRESH_SEC
-    progress_bar_placeholder.progress(progress)
-    now_placeholder.markdown(f"**{datetime.datetime.now(pytz.timezone(TIMEZONE)).strftime('%d.%m.%Y %H:%M:%S')}**")
-    time.sleep(1)
+if 'kpi_last_update' not in st.session_state:
+    st.session_state.kpi_last_update = time.time()
+
+if 'chart_last_update' not in st.session_state:
+    st.session_state.chart_last_update = time.time()
 
 # --------------------------
-# Dashboard Layout: 2 Reihen x 3 Spalten
+# Header: Titel links, Balken mittig, Uhr rechts
+# --------------------------
+header_col1, header_col2, header_col3 = st.columns([3,1,3])
+with header_col1:
+    st.title("ETF & ETC Dashboard")
+with header_col2:
+    progress_placeholder = st.empty()
+with header_col3:
+    now_placeholder = st.empty()
+
+# --------------------------
+# Funktion für Fortschrittsbalken & Uhr
+# --------------------------
+def update_header():
+    now = datetime.datetime.now(pytz.timezone(TIMEZONE))
+    # Uhrzeit HH:MM
+    now_placeholder.markdown(f"**{now.strftime('%d.%m.%Y %H:%M')}**")
+    # Fortschrittsbalken KPI
+    elapsed = time.time() - st.session_state.kpi_last_update
+    progress = min(elapsed / KPI_REFRESH_SEC, 1.0)
+    progress_placeholder.progress(progress)
+
+# --------------------------
+# Daten laden
+# --------------------------
+charts_data = {}
+for ticker in tickers:
+    # Charts nur alle 30 min laden
+    if ticker not in charts_data or time.time() - st.session_state.chart_last_update > CHART_REFRESH_MIN*60:
+        charts_data[ticker] = get_data(ticker)
+st.session_state.chart_last_update = time.time()
+
+# --------------------------
+# KPI berechnen
+# --------------------------
+kpi_results = {}
+for ticker in tickers:
+    df = charts_data[ticker]
+    kpi_results[ticker] = calc_kpis(df)
+
+# --------------------------
+# Dashboard Layout
 # --------------------------
 rows = [st.columns(3) for _ in range(2)]
 
@@ -122,8 +153,8 @@ for i, ticker in enumerate(tickers):
     row = rows[i // 3]
     col = row[i % 3]
 
-    df = get_data(ticker)
-    current, ath, daily, monthly, yearly, delta_ath = calc_kpis(df)
+    df = charts_data[ticker]
+    current, ath, daily, monthly, yearly, delta_ath = kpi_results[ticker]
     fig = create_line_chart(df, daily=daily)
     info = ticker_info.get(ticker, {"name": ticker, "isin": ""})
 
@@ -148,3 +179,14 @@ for i, ticker in enumerate(tickers):
                 st.markdown(f"**Jahresperformance:** {colorize(yearly)}", unsafe_allow_html=True)
 
             st.markdown("---")
+
+# --------------------------
+# Fortschrittsbalken in Endlosschleife aktualisieren
+# --------------------------
+while True:
+    update_header()
+    elapsed = time.time() - st.session_state.kpi_last_update
+    if elapsed >= KPI_REFRESH_SEC:
+        st.session_state.kpi_last_update = time.time()
+        break  # beim nächsten Streamlit Rerun werden KPI neu berechnet
+    time.sleep(0.5)
