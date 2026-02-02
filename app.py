@@ -3,20 +3,18 @@ import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime
-import time
 import pytz
 
 # ==============================
 # Streamlit Config
 # ==============================
 st.set_page_config(page_title="ETF & ETC Dashboard", layout="wide")
-
 PERIOD = "1y"
 REFRESH_SEC = 45
 TIMEZONE = pytz.timezone("Europe/Berlin")
 
 # --------------------------
-# CSS für Layout und Balken
+# CSS für Layout
 # --------------------------
 st.markdown("""
 <style>
@@ -25,19 +23,23 @@ st.markdown("""
     justify-content: space-between;
     align-items: center;
     width: 100%;
+    margin-bottom: 50px;
+}
+
+.header-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    height: 80px; /* Höhe des Containers */
 }
 
 #refresh-bar-container {
-    display: flex;
-    justify-content: center;
-    margin: 20px 0;
-}
-
-#refresh-bar {
-    height: 15px;
     width: 300px;
+    height: 15px;
     background-color: lightgray;
     border-radius: 5px;
+    margin-left: 20px;
 }
 
 #refresh-bar-fill {
@@ -122,74 +124,67 @@ def create_line_chart(df, daily=None):
     )
     return fig
 
-# --------------------------
-# Platzhalter
-# --------------------------
-header_placeholder = st.empty()
-refresh_bar_placeholder = st.empty()
-dashboard_placeholder = st.empty()
-
-# --------------------------
-# Hauptloop
-# --------------------------
-while True:
-    now = datetime.now(TIMEZONE)
-    
-    # Header: Titel + Datum/Uhrzeit
-    header_placeholder.markdown(f"""
-    <div class="header-container">
+# ==============================
+# Header + Balken + Datum in einer Linie
+# ==============================
+now = datetime.now(TIMEZONE)
+st.markdown(f"""
+<div class="header-container">
+    <div class="header-left">
         <h1>ETF & ETC Dashboard</h1>
-        <div>{now.strftime('%d.%m.%Y %H:%M:%S')}</div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # --------------------------
-    # Refresh-Balken mittig
-    # --------------------------
-    for sec in range(REFRESH_SEC):
-        fill_pct = int((sec+1)/REFRESH_SEC*100)
-        refresh_bar_placeholder.markdown(f"""
         <div id="refresh-bar-container">
-            <div id="refresh-bar">
-                <div id="refresh-bar-fill" style="width:{fill_pct}%"></div>
-            </div>
+            <div id="refresh-bar-fill"></div>
         </div>
-        """, unsafe_allow_html=True)
-        time.sleep(1)
+    </div>
+    <div>{now.strftime('%d.%m.%Y %H:%M:%S')}</div>
+</div>
+""", unsafe_allow_html=True)
 
-    # --------------------------
-    # Dashboard Charts
-    # --------------------------
-    dashboard_container = dashboard_placeholder.container()
-    rows = [dashboard_container.columns(3) for _ in range(2)]
+# ==============================
+# Aktualisierung Balken
+# ==============================
+progress_bar = st.empty()
+for i in range(REFRESH_SEC):
+    progress_bar.progress((i+1)/REFRESH_SEC)
+    st.sleep(1)  # non-blocking Sleep
 
-    for i, ticker in enumerate(tickers):
-        row = rows[i // 3]
-        col = row[i % 3]
+# ==============================
+# Dashboard Charts + KPIs
+# ==============================
+rows = [st.columns(3) for _ in range(2)]
 
-        df = get_data(ticker)
-        current, ath, daily, monthly, yearly, delta_ath = calc_kpis(df)
-        fig = create_line_chart(df, daily=daily)
-        info = ticker_info.get(ticker, {"name": ticker, "isin": ""})
+for i, ticker in enumerate(tickers):
+    row = rows[i // 3]
+    col = row[i % 3]
 
-        with col:
-            if df is None or fig is None:
-                st.error(f"Keine Daten für {ticker} gefunden.")
-            else:
-                st.markdown(
-                    f"**{info['name']}**  \n<small>Ticker: {ticker}&nbsp;&nbsp;&nbsp;&nbsp;ISIN: {info['isin']}</small>",
-                    unsafe_allow_html=True
-                )
-                st.plotly_chart(fig, use_container_width=True)
+    df = get_data(ticker)
+    current, ath, daily, monthly, yearly, delta_ath = calc_kpis(df)
+    fig = create_line_chart(df, daily=daily)
+    info = ticker_info.get(ticker, {"name": ticker, "isin": ""})
 
-                kpi_cols = st.columns(2)
-                with kpi_cols[0]:
-                    st.markdown(f"**Aktueller Kurs:** {current:.2f} EUR")
-                    st.markdown(f"**All Time High:** {ath:.2f} EUR")
-                    st.markdown(f"**△ ATH:** {colorize(delta_ath)}", unsafe_allow_html=True)
-                with kpi_cols[1]:
-                    st.markdown(f"**Tagesperformance:** {colorize(daily)}", unsafe_allow_html=True)
-                    st.markdown(f"**Monatsperformance:** {colorize(monthly)}", unsafe_allow_html=True)
-                    st.markdown(f"**Jahresperformance:** {colorize(yearly)}", unsafe_allow_html=True)
+    with col:
+        if df is None or fig is None:
+            st.error(f"Keine Daten für {ticker} gefunden.")
+        else:
+            st.markdown(
+                f"**{info['name']}**  \n<small>Ticker: {ticker}&nbsp;&nbsp;&nbsp;&nbsp;ISIN: {info['isin']}</small>",
+                unsafe_allow_html=True
+            )
+            st.plotly_chart(fig, use_container_width=True)
 
-                st.markdown("---")
+            kpi_cols = st.columns(2)
+            with kpi_cols[0]:
+                st.markdown(f"**Aktueller Kurs:** {current:.2f} EUR")
+                st.markdown(f"**All Time High:** {ath:.2f} EUR")
+                st.markdown(f"**△ ATH:** {colorize(delta_ath)}", unsafe_allow_html=True)
+            with kpi_cols[1]:
+                st.markdown(f"**Tagesperformance:** {colorize(daily)}", unsafe_allow_html=True)
+                st.markdown(f"**Monatsperformance:** {colorize(monthly)}", unsafe_allow_html=True)
+                st.markdown(f"**Jahresperformance:** {colorize(yearly)}", unsafe_allow_html=True)
+
+            st.markdown("---")
+
+# ==============================
+# Auto-Refresh alle REFRESH_SEC
+# ==============================
+st.experimental_rerun()
