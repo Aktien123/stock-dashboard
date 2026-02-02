@@ -4,6 +4,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime
 import time
+import pytz  # für Zeitzone Berlin
 
 # ==============================
 # Streamlit Config
@@ -12,6 +13,7 @@ st.set_page_config(page_title="ETF & ETC Dashboard", layout="wide")
 
 PERIOD = "1y"
 REFRESH_SEC = 45  # KPI-Refresh alle 45 Sekunden
+TIMEZONE = pytz.timezone("Europe/Berlin")  # Berlin Zeit
 
 # --------------------------
 # CSS für Layout und Balken
@@ -22,7 +24,6 @@ st.markdown("""
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
 }
 
 .header-top {
@@ -123,32 +124,32 @@ def create_line_chart(df, daily=None):
     return fig
 
 # --------------------------
-# Platzhalter
+# Platzhalter für dynamische Bereiche
 # --------------------------
 header_placeholder = st.empty()
 refresh_bar_placeholder = st.empty()
-date_placeholder = st.empty()
 dashboard_placeholder = st.empty()
 
 # --------------------------
-# Dashboard Loop
+# Hauptloop
 # --------------------------
 while True:
     # --------------------------
-    # Header + Balken + Datum
+    # Header + Datum (Berlin Zeit)
     # --------------------------
+    now = datetime.now(TIMEZONE)
     header_placeholder.markdown(f"""
     <div class="header-container">
         <div class="header-top">
             <h1>ETF & ETC Dashboard</h1>
-            <div>{datetime.now().strftime('%d.%m.%Y %H:%M:%S')}</div>
+            <div>{now.strftime('%d.%m.%Y %H:%M:%S')}</div>
         </div>
         <div id="refresh-bar">
             <div id="refresh-bar-fill" style="width:0%;"></div>
         </div>
     </div>
     """, unsafe_allow_html=True)
-    
+
     # --------------------------
     # KPI & Charts
     # --------------------------
@@ -198,16 +199,4 @@ while True:
             </div>
             """, unsafe_allow_html=True
         )
-        # Datum + Uhrzeit oben rechts
-        header_placeholder.markdown(f"""
-        <div class="header-container">
-            <div class="header-top">
-                <h1>ETF & ETC Dashboard</h1>
-                <div>{datetime.now().strftime('%d.%m.%Y %H:%M:%S')}</div>
-            </div>
-            <div id="refresh-bar">
-                <div id="refresh-bar-fill" style="width:{fill_pct}%"></div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
         time.sleep(1)
