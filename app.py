@@ -22,15 +22,15 @@ st.markdown("""
 <style>
 .header-container {
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
     align-items: center;
+    width: 100%;
 }
 
-.header-top {
+#refresh-bar-container {
     display: flex;
-    justify-content: space-between;
-    width: 100%;
-    align-items: center;
+    justify-content: center;
+    margin: 20px 0;
 }
 
 #refresh-bar {
@@ -38,7 +38,6 @@ st.markdown("""
     width: 300px;
     background-color: lightgray;
     border-radius: 5px;
-    margin: 10px 0px;
 }
 
 #refresh-bar-fill {
@@ -90,111 +89,4 @@ def calc_kpis(df):
     current = float(close.iloc[-1])
     ath = float(close.max())
     daily = float((close.iloc[-1]-close.iloc[-2])/close.iloc[-2]*100)
-    monthly = float((close.iloc[-1]-close.iloc[max(0,len(close)-22)])/close.iloc[max(0,len(close)-22)]*100) if len(close) >=22 else None
-    yearly = float((close.iloc[-1]-close.iloc[0])/close.iloc[0]*100)
-    delta_ath = float((current - ath) / ath * 100)
-    return current, ath, daily, monthly, yearly, delta_ath
-
-def colorize(val):
-    try:
-        val = float(val)
-    except (TypeError, ValueError):
-        return "n/a"
-    color = "green" if val >= 0 else "red"
-    return f"<span style='color: {color}'>{val:.2f}%</span>"
-
-def create_line_chart(df, daily=None):
-    if df is None or len(df) < 2:
-        return None
-    line_color = "green" if daily is not None and daily >= 0 else "red"
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=df.index,
-        y=df['Close'],
-        mode='lines',
-        line=dict(color=line_color, width=2),
-        hovertemplate='Datum: %{x|%d.%m.%Y}<br>Kurs: %{y:.2f} EUR<extra></extra>'
-    ))
-    fig.update_layout(
-        height=300,
-        yaxis_title="EUR",
-        margin=dict(l=10,r=10,t=30,b=10),
-        plot_bgcolor="rgba(0,0,0,0)"
-    )
-    return fig
-
-# --------------------------
-# Platzhalter
-# --------------------------
-header_placeholder = st.empty()
-refresh_bar_placeholder = st.empty()
-dashboard_placeholder = st.empty()
-
-# --------------------------
-# Hauptloop
-# --------------------------
-while True:
-    now = datetime.now(TIMEZONE)
-    
-    # --------------------------
-    # Header nur mit Titel + Datum
-    # --------------------------
-    header_placeholder.markdown(f"""
-    <div class="header-container">
-        <div class="header-top">
-            <h1>ETF & ETC Dashboard</h1>
-            <div>{now.strftime('%d.%m.%Y %H:%M:%S')}</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # --------------------------
-    # KPI & Charts
-    # --------------------------
-    dashboard_container = dashboard_placeholder.container()
-    rows = [dashboard_container.columns(3) for _ in range(2)]
-
-    for i, ticker in enumerate(tickers):
-        row = rows[i // 3]
-        col = row[i % 3]
-
-        df = get_data(ticker)
-        current, ath, daily, monthly, yearly, delta_ath = calc_kpis(df)
-        fig = create_line_chart(df, daily=daily)
-        info = ticker_info.get(ticker, {"name": ticker, "isin": ""})
-
-        with col:
-            if df is None or fig is None:
-                st.error(f"Keine Daten für {ticker} gefunden.")
-            else:
-                st.markdown(
-                    f"**{info['name']}**  \n<small>Ticker: {ticker}&nbsp;&nbsp;&nbsp;&nbsp;ISIN: {info['isin']}</small>",
-                    unsafe_allow_html=True
-                )
-                st.plotly_chart(fig, use_container_width=True)
-
-                kpi_cols = st.columns(2)
-                with kpi_cols[0]:
-                    st.markdown(f"**Aktueller Kurs:** {current:.2f} EUR")
-                    st.markdown(f"**All Time High:** {ath:.2f} EUR")
-                    st.markdown(f"**△ ATH:** {colorize(delta_ath)}", unsafe_allow_html=True)
-                with kpi_cols[1]:
-                    st.markdown(f"**Tagesperformance:** {colorize(daily)}", unsafe_allow_html=True)
-                    st.markdown(f"**Monatsperformance:** {colorize(monthly)}", unsafe_allow_html=True)
-                    st.markdown(f"**Jahresperformance:** {colorize(yearly)}", unsafe_allow_html=True)
-
-                st.markdown("---")
-
-    # --------------------------
-    # Nur ein Refresh-Balken
-    # --------------------------
-    for sec in range(REFRESH_SEC):
-        fill_pct = int((sec+1)/REFRESH_SEC*100)
-        refresh_bar_placeholder.markdown(
-            f"""
-            <div id="refresh-bar">
-                <div id="refresh-bar-fill" style="width:{fill_pct}%"></div>
-            </div>
-            """, unsafe_allow_html=True
-        )
-        time.sleep(1)
+    monthly = float((close.iloc[-1]-close.iloc[max(0,len(close)-22)])/close.iloc[max(0,len(close)-22)]*100) if le*
