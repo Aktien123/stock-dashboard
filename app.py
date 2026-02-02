@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime
 import time
-import pytz  # für Zeitzone Berlin
+import pytz
 
 # ==============================
 # Streamlit Config
@@ -12,8 +12,8 @@ import pytz  # für Zeitzone Berlin
 st.set_page_config(page_title="ETF & ETC Dashboard", layout="wide")
 
 PERIOD = "1y"
-REFRESH_SEC = 45  # KPI-Refresh alle 45 Sekunden
-TIMEZONE = pytz.timezone("Europe/Berlin")  # Berlin Zeit
+REFRESH_SEC = 45
+TIMEZONE = pytz.timezone("Europe/Berlin")
 
 # --------------------------
 # CSS für Layout und Balken
@@ -124,7 +124,7 @@ def create_line_chart(df, daily=None):
     return fig
 
 # --------------------------
-# Platzhalter für dynamische Bereiche
+# Platzhalter
 # --------------------------
 header_placeholder = st.empty()
 refresh_bar_placeholder = st.empty()
@@ -134,18 +134,16 @@ dashboard_placeholder = st.empty()
 # Hauptloop
 # --------------------------
 while True:
-    # --------------------------
-    # Header + Datum (Berlin Zeit)
-    # --------------------------
     now = datetime.now(TIMEZONE)
+    
+    # --------------------------
+    # Header nur mit Titel + Datum
+    # --------------------------
     header_placeholder.markdown(f"""
     <div class="header-container">
         <div class="header-top">
             <h1>ETF & ETC Dashboard</h1>
             <div>{now.strftime('%d.%m.%Y %H:%M:%S')}</div>
-        </div>
-        <div id="refresh-bar">
-            <div id="refresh-bar-fill" style="width:0%;"></div>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -188,7 +186,7 @@ while True:
                 st.markdown("---")
 
     # --------------------------
-    # Refresh-Balken Animation 45s
+    # Nur ein Refresh-Balken
     # --------------------------
     for sec in range(REFRESH_SEC):
         fill_pct = int((sec+1)/REFRESH_SEC*100)
