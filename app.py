@@ -2,33 +2,31 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
-import datetime
+from datetime import datetime, timezone, timedelta
 import pytz
-import time
 
 # --------------------------
-# Config
+# Streamlit Layout
 # --------------------------
 st.set_page_config(page_title="ETF & ETC Dashboard", layout="wide")
 
+# --------------------------
+# Zeitraum & Update Intervall
+# --------------------------
 PERIOD = "1y"
-KPI_REFRESH_SEC = 45
-CHART_REFRESH_SEC = 30*60  # 30 Minuten
-TIMEZONE = "Europe/Berlin"
+KPI_UPDATE_SEC = 45      # KPI alle 45 Sekunden
+CHART_UPDATE_MIN = 30    # Charts alle 30 Minuten
 
 # --------------------------
-# CSS für Header & Balken
+# Skalierung auf 75% per CSS
 # --------------------------
 st.markdown(
     """
     <style>
-    .header-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    .progress-bar {
-        width: 150px;  /* ca. 3cm */
+    .main > div.block-container {
+        padding-top: 0rem;
+        transform: scale(0.75);
+        transform-origin: top left;
     }
     </style>
     """,
@@ -36,10 +34,26 @@ st.markdown(
 )
 
 # --------------------------
-# Tickerliste & Info
+# Header Layout
+# --------------------------
+header_cols = st.columns([2,1,2])  # Titel / Balken / Datum
+with header_cols[0]:
+    st.title("ETF & ETC Dashboard")
+with header_cols[1]:
+    progress_bar = st.progress(0)
+with header_cols[2]:
+    tz = pytz.timezone("Europe/Berlin")
+    now = datetime.now(tz).strftime("%H:%M")
+    st.markdown(f"<div style='text-align: right; font-weight:bold'>{now}</div>", unsafe_allow_html=True)
+
+st.markdown("---")
+
+# --------------------------
+# Liste der 6 Ticker
 # --------------------------
 tickers = ["IWDA.AS", "VWCE.DE", "IS3N.DE", "IUSN.DE", "4GLD.DE", "XAD6.DE"]
 
+# Mapping: Ticker → Name + ISIN
 ticker_info = {
     "IWDA.AS": {"name":"iShares Core MSCI World UCITS ETF USD Acc.","isin":"IE00B4L5Y983"},
     "VWCE.DE": {"name":"Vanguard FTSE All-World U.ETF Reg. Shs USD Acc.","isin":"IE00BK5BQT80"},
@@ -53,6 +67,7 @@ ticker_info = {
 # Funktionen
 # --------------------------
 def get_data(ticker):
+    """Lädt die Kursdaten für 1 Jahr fest"""
     try:
         df = yf.Ticker(ticker).history(period=PERIOD)
         if df.empty or len(df) < 2:
@@ -65,6 +80,7 @@ def get_data(ticker):
 def calc_kpis(df):
     if df is None or len(df) < 2:
         return None, None, None, None, None, None
+
     close = df['Close']
     current = float(close.iloc[-1])
     ath = float(close.max())
@@ -103,94 +119,62 @@ def create_line_chart(df, daily=None):
     return fig
 
 # --------------------------
-# Session State
+# Container für Charts & KPIs
 # --------------------------
-if 'last_kpi_update' not in st.session_state:
-    st.session_state.last_kpi_update = time.time()
-if 'last_chart_update' not in st.session_state:
-    st.session_state.last_chart_update = time.time()
-if 'data_cache' not in st.session_state:
-    st.session_state.data_cache = {t: get_data(t) for t in tickers}
+chart_containers = [st.empty() for _ in tickers]
 
-# --------------------------
-# Header Layout
-# --------------------------
-header_container = st.container()
-with header_container:
-    cols = st.columns([3,2,1])
-    with cols[0]:
-        st.markdown("<h1 style='margin-bottom:0;'>ETF & ETC Dashboard</h1>", unsafe_allow_html=True)
-    progress_ph = cols[1].progress(0)
-    now_ph = cols[2].empty()
+def render_dashboard():
+    rows = [st.columns(3) for _ in range(2)]
+    for i, ticker in enumerate(tickers):
+        row = rows[i // 3]
+        col = row[i % 3]
 
-# --------------------------
-# Dashboard Layout: Charts & KPIs
-# --------------------------
-rows = [st.columns(3) for _ in range(2)]
-chart_phs, kpi_phs = [], []
+        df = get_data(ticker)
+        current, ath, daily, monthly, yearly, delta_ath = calc_kpis(df)
+        fig = create_line_chart(df, daily=daily)
+        info = ticker_info.get(ticker, {"name": ticker, "isin": ""})
 
-for i, ticker in enumerate(tickers):
-    row = rows[i//3]
-    col = row[i%3]
-    # Charts
-    chart_ph = col.empty()
-    df = st.session_state.data_cache[ticker]
-    chart_ph.plotly_chart(create_line_chart(df), use_container_width=True)
-    chart_phs.append(chart_ph)
-    # KPIs
-    kpi_ph = col.empty()
-    current, ath, daily, monthly, yearly, delta_ath = calc_kpis(df)
-    info = ticker_info.get(ticker, {"name": ticker, "isin": ""})
-    kpi_ph.markdown(
-        f"<b>{info['name']}</b><br>"
-        f"Ticker: {ticker} &nbsp; ISIN: {info['isin']}<br>"
-        f"**Aktueller Kurs:** {current:.2f} EUR<br>"
-        f"**All Time High:** {ath:.2f} EUR<br>"
-        f"**△ ATH:** {colorize(delta_ath)}<br>"
-        f"**Tagesperformance:** {colorize(daily)}<br>"
-        f"**Monatsperformance:** {colorize(monthly)}<br>"
-        f"**Jahresperformance:** {colorize(yearly)}",
-        unsafe_allow_html=True
-    )
-    kpi_phs.append(kpi_ph)
+        with col:
+            if df is None or fig is None:
+                st.error(f"Keine Daten für {ticker} gefunden.")
+            else:
+                st.markdown(
+                    f"**{info['name']}**  \n<small>Ticker: {ticker}&nbsp;&nbsp;&nbsp;&nbsp;ISIN: {info['isin']}</small>",
+                    unsafe_allow_html=True
+                )
+                st.plotly_chart(fig, use_container_width=True)
+
+                kpi_cols = st.columns(2)
+                with kpi_cols[0]:
+                    st.markdown(f"**Aktueller Kurs:** {current:.2f} EUR")
+                    st.markdown(f"**All Time High:** {ath:.2f} EUR")
+                    st.markdown(f"**△ ATH:** {colorize(delta_ath)}", unsafe_allow_html=True)
+                with kpi_cols[1]:
+                    st.markdown(f"**Tagesperformance:** {colorize(daily)}", unsafe_allow_html=True)
+                    st.markdown(f"**Monatsperformance:** {colorize(monthly)}", unsafe_allow_html=True)
+                    st.markdown(f"**Jahresperformance:** {colorize(yearly)}", unsafe_allow_html=True)
+
+                st.markdown("---")
 
 # --------------------------
-# Endlos Loop für KPI, Balken & Charts
+# Initiales Rendern
 # --------------------------
-while True:
-    now = datetime.datetime.now(pytz.timezone(TIMEZONE))
-    now_ph.markdown(f"**{now.strftime('%d.%m.%Y %H:%M')}**", unsafe_allow_html=True)
+render_dashboard()
 
-    elapsed_kpi = time.time() - st.session_state.last_kpi_update
-    elapsed_chart = time.time() - st.session_state.last_chart_update
+# --------------------------
+# Autorefresh für KPI + Balken
+# --------------------------
+placeholder = st.empty()
 
-    # Balken (0→100% über KPI_REFRESH_SEC)
-    progress = (elapsed_kpi % KPI_REFRESH_SEC) / KPI_REFRESH_SEC
-    progress_ph.progress(progress)
-
-    # KPI Update
-    if elapsed_kpi >= KPI_REFRESH_SEC:
-        st.session_state.last_kpi_update = time.time()
-        for i, ticker in enumerate(tickers):
-            df = st.session_state.data_cache[ticker]
-            current, ath, daily, monthly, yearly, delta_ath = calc_kpis(df)
-            kpi_phs[i].markdown(
-                f"<b>{ticker_info[ticker]['name']}</b><br>"
-                f"Ticker: {ticker} &nbsp; ISIN: {ticker_info[ticker]['isin']}<br>"
-                f"**Aktueller Kurs:** {current:.2f} EUR<br>"
-                f"**All Time High:** {ath:.2f} EUR<br>"
-                f"**△ ATH:** {colorize(delta_ath)}<br>"
-                f"**Tagesperformance:** {colorize(daily)}<br>"
-                f"**Monatsperformance:** {colorize(monthly)}<br>"
-                f"**Jahresperformance:** {colorize(yearly)}",
-                unsafe_allow_html=True
-            )
-
-    # Chart Update alle 30min
-    if elapsed_chart >= CHART_REFRESH_SEC:
-        st.session_state.last_chart_update = time.time()
-        st.session_state.data_cache = {t: get_data(t) for t in tickers}
-        for i, ticker in enumerate(tickers):
-            chart_phs[i].plotly_chart(create_line_chart(st.session_state.data_cache[ticker]), use_container_width=True)
-
-    time.sleep(0.5)
+for i in range(KPI_UPDATE_SEC+1):
+    progress_bar.progress(i / KPI_UPDATE_SEC)
+    # Uhrzeit rechts updaten
+    now = datetime.now(pytz.timezone("Europe/Berlin")).strftime("%H:%M")
+    with header_cols[2]:
+        st.markdown(f"<div style='text-align: right; font-weight:bold'>{now}</div>", unsafe_allow_html=True)
+    st.sleep(1)
+    if i == KPI_UPDATE_SEC:
+        # KPI neu rendern
+        render_dashboard()
+        # Balken wieder auf 0
+        progress_bar.progress(0)
