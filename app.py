@@ -28,7 +28,7 @@ st.title("ETF & ETC Dashboard")
 # ==========================================================
 # Ticker
 # ==========================================================
-tickers = ["IWDA.AS", "VWCE.DE", "IS3N.DE", "IUSN.DE", "4GLD.DE", "XAD6.DE"]
+tickers = ["IWDA.AS", "VWCE.DE", "IS3N.DE", "IUSN.DE", "4GLD.DE", "XAD6.MI"]
 
 ticker_info = {
     "IWDA.AS": {"name":"iShares Core MSCI World UCITS ETF USD Acc.","isin":"IE00B4L5Y983"},
@@ -36,7 +36,7 @@ ticker_info = {
     "IS3N.DE": {"name":"iShares Core MSCI Emerging Markets IMI UCITS ETF (Acc)","isin":"IE00BKM4GZ66"},
     "IUSN.DE": {"name":"iShares MSCI World Small Cap (Acc)","isin":"IE00BF4RFH31"},
     "4GLD.DE": {"name":"Xetra Gold ETC","isin":"DE000A0S9GB0"},
-    "XAD6.DE": {"name":"Xtrackers Physical Silver ETC","isin":"DE000A1E0HS6"}
+    "XAD6.MI": {"name":"Xtrackers Physical Silver ETC","isin":"DE000A1E0HS6"}
 }
 
 # ==========================================================
